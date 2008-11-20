@@ -1,0 +1,1224 @@
+#LyX 1.5.6 created this file. For more info see http://www.lyx.org/
+\lyxformat 276
+\begin_document
+\begin_header
+\textclass beamer
+\begin_preamble
+% \usetheme{Warsaw}
+\usetheme{Copenhagen}
+% \def\lyxframeend{} % In case there is a superfluous frame end
+\setbeamercovered{transparent}
+
+% \usepackage{pgfpages}
+% \pgfpagelayout{4 on 1}[a4paper,border shrink=5mm]
+%\mode<handout>{\setbeamercolor{background canvas}%{bg=black!5}}
+%{bg=white}
+\mode<handout>{\usetheme{default}}
+
+\def\orange{\textcolor{orange}}
+\def\gray{\textcolor{gray}}
+\def\green{\textcolor{green}}
+\def\pink{\textcolor{purple}}
+
+\AtBeginSection[] % Do nothing for \section*
+{
+  \begin{frame}<beamer>
+    \frametitle{Outline}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+%\usepackage{ifpdf}
+%\ifpdf
+%  \DeclareGraphicsRule{*}{mps}{*}{}
+%\fi
+
+%\input{supp-pdf.tex}
+%\input{supp-mis.tex}
+\end_preamble
+\language english
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\float_placement H
+\paperfontsize default
+\spacing single
+\papersize default
+\use_geometry false
+\use_amsmath 2
+\use_esint 0
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\secnumdepth 1
+\tocdepth 2
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Transactional Memory Evaluation using Apache Webserver
+\end_layout
+
+\begin_layout Author
+Haggai Eran
+\end_layout
+
+\begin_layout Section
+Transactional Memory
+\end_layout
+
+\begin_layout Subsection
+Lock based synchronization Limitations
+\end_layout
+
+\begin_layout BeginFrame
+Traditional Synchronization
+\end_layout
+
+\begin_layout Example
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+void withdraw(account, amount) {
+\end_layout
+
+\begin_layout LyX-Code
+  accounts[account] -= amount;
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Course-Grained Locks
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Course-grained-locks.png
+	lyxscale 50
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+Course-Grained Locks
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Course-grained-locks.png
+	lyxscale 20
+	width 30col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Example
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<1->
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+void withdraw(account, amount) {
+\end_layout
+
+\begin_layout LyX-Code
+  lock(big_mutex);
+\end_layout
+
+\begin_layout LyX-Code
+  accounts[account] -= amount;
+\end_layout
+
+\begin_layout LyX-Code
+  release(big_mutex);
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<2->
+\end_layout
+
+\end_inset
+
+Easy to program.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<3->
+\end_layout
+
+\end_inset
+
+Doesn't scale.
+\end_layout
+
+\begin_layout BeginFrame
+Fine-Grained Locks
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Fine-grained-locks.png
+	lyxscale 50
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+Fine-Grained Locks
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Fine-grained-locks.png
+	lyxscale 20
+	width 30col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Example
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<1->
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+void withdraw(account, amount) {
+\end_layout
+
+\begin_layout LyX-Code
+  lock(accounts[account].mutex);
+\end_layout
+
+\begin_layout LyX-Code
+  accounts[account] -= amount;
+\end_layout
+
+\begin_layout LyX-Code
+  release(accounts[account].mutex);
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<2->
+\end_layout
+
+\end_inset
+
+Can scale well.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<3->
+\end_layout
+
+\end_inset
+
+Difficult to program.
+\end_layout
+
+\begin_layout BeginFrame
+Fine-Grained Locks Difficulties
+\end_layout
+
+\begin_layout FrameSubtitle
+Composition
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Fine-grained-locks.png
+	lyxscale 20
+	width 30col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Example
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+void transfer(fromAccount, toAccount, amount) {
+\end_layout
+
+\begin_layout LyX-Code
+  withdraw(fromAccount, amount); 
+\end_layout
+
+\begin_layout LyX-Code
+  deposit(toAcount, amount);
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<2->
+\end_layout
+
+\end_inset
+
+Locking both accounts from 
+\family typewriter
+transfer
+\family default
+ - breaks encapsulation, deadlocks.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<3->
+\end_layout
+
+\end_inset
+
+Big lock - decreases performance.
+\end_layout
+
+\begin_layout BeginFrame
+Fine-Grained Locks Difficulties
+\end_layout
+
+\begin_layout FrameSubtitle
+Locking Policies
+\end_layout
+
+\begin_layout ExampleBlock
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+{Comment from the linux kernel}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+/*
+\end_layout
+
+\begin_layout LyX-Code
+ * When a locked buffer is visible to the I/O layer
+\end_layout
+
+\begin_layout LyX-Code
+ * BH_Launder is set.
+ This means before unlocking
+\end_layout
+
+\begin_layout LyX-Code
+ * we must clear BH_Launder,mb() on alpha and then
+\end_layout
+
+\begin_layout LyX-Code
+ * clear BH_Lock, so no reader can see BH_Launder set
+\end_layout
+
+\begin_layout LyX-Code
+ * on an unlocked buffer and then risk to deadlock.
+\end_layout
+
+\begin_layout LyX-Code
+ */
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Fine-Grained Locks Difficulties
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Segfault.png
+	lyxscale 50
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Transactional Memory Introduction
+\end_layout
+
+\begin_layout BeginFrame
+Transactional Memory
+\end_layout
+
+\begin_layout Itemize
+Provide a simple API for programmers.
+\end_layout
+
+\begin_layout Itemize
+Offering fast implementations.
+\end_layout
+
+\begin_layout BeginFrame
+Transactional Memory
+\end_layout
+
+\begin_layout FrameSubtitle
+Simple API
+\end_layout
+
+\begin_layout Example
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+void withdraw(account, amount) {
+\end_layout
+
+\begin_layout LyX-Code
+  atomic {
+\end_layout
+
+\begin_layout LyX-Code
+    accounts[account] -= amount;
+\end_layout
+
+\begin_layout LyX-Code
+  }
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\end_deeper
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout ExampleBlock
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+{Nested transactions}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+void transfer(fromAccount, toAccount, amount) {
+\end_layout
+
+\begin_layout LyX-Code
+  atomic {
+\end_layout
+
+\begin_layout LyX-Code
+    withdraw(fromAccount, amount); 
+\end_layout
+
+\begin_layout LyX-Code
+    deposit(toAcount, amount);
+\end_layout
+
+\begin_layout LyX-Code
+  }
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Transactional Memory
+\end_layout
+
+\begin_layout FrameSubtitle
+Implementation
+\end_layout
+
+\begin_layout Itemize
+A transaction is run speculatively without taking any locks.
+\end_layout
+
+\begin_layout Itemize
+Collisions are detected either at commit time or during the run.
+\end_layout
+
+\begin_layout Itemize
+On collision, one of the transactions is aborted and its changes are rolled
+ back.
+\end_layout
+
+\begin_layout Itemize
+Later the aborted transaction is restarted.
+\end_layout
+
+\begin_layout BeginFrame
+Transactional Memory
+\end_layout
+
+\begin_layout FrameSubtitle
+Implementation
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Rollback.png
+	lyxscale 50
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+Transactional Memory
+\end_layout
+
+\begin_layout FrameSubtitle
+Implementation by software
+\end_layout
+
+\begin_layout Itemize
+All global memory accesses are handled by a special library.
+\end_layout
+
+\begin_layout Itemize
+The library detects collisions and handles commits and aborts.
+\end_layout
+
+\begin_layout BeginFrame
+Transactional Memory
+\end_layout
+
+\begin_layout FrameSubtitle
+Implementation by hardware
+\end_layout
+
+\begin_layout Itemize
+Reuse the cache coherency mechanism in multicore/multiprocessor machines.
+\end_layout
+
+\begin_layout Itemize
+Requires special hardware.
+\end_layout
+
+\begin_layout Itemize
+Limitations: Size and duration of transactions, context switches.
+\end_layout
+
+\begin_layout Section
+TM Evaluation
+\end_layout
+
+\begin_layout Subsection
+Evaluation Strategy
+\end_layout
+
+\begin_layout BeginFrame
+Existing Benchmarks
+\end_layout
+
+\begin_layout Itemize
+Red-Black trees benchmarks
+\end_layout
+
+\begin_layout Itemize
+STAMP benchmark suite.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Bayesian network learning
+\end_layout
+
+\begin_layout Itemize
+Gene sequencing
+\end_layout
+
+\begin_layout Itemize
+Network intrusion detection
+\end_layout
+
+\begin_layout Itemize
+K-means clustering
+\end_layout
+
+\begin_layout Itemize
+Maze routing
+\end_layout
+
+\begin_layout Itemize
+Graph kernels
+\end_layout
+
+\begin_layout Itemize
+Client/server travel reservation system
+\end_layout
+
+\begin_layout Itemize
+Delaunay mesh refinement
+\end_layout
+
+\end_deeper
+\begin_layout Block
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+{Our Project's Goal}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Create a benchmark based on a 
+\begin_inset ERT
+status collapsed
+
+\begin_layout Standard
+
+
+\backslash
+only<1>{
+\end_layout
+
+\end_inset
+
+real-world application
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+}
+\end_layout
+
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+
+\backslash
+only<2| handout:0>{
+\end_layout
+
+\end_inset
+
+
+\begin_inset ERT
+status collapsed
+
+\begin_layout Standard
+
+
+\backslash
+orange{
+\end_layout
+
+\end_inset
+
+Apache web-server
+\begin_inset ERT
+status collapsed
+
+\begin_layout Standard
+
+}
+\end_layout
+
+\end_inset
+
+
+\begin_inset ERT
+status collapsed
+
+\begin_layout Standard
+
+}
+\end_layout
+
+\end_inset
+
+ for transactional memory.
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Apache Web Server
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename apache_feather.png
+	lyxscale 20
+	width 30col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+Written in C.
+\end_layout
+
+\begin_layout Itemize
+Support many Multiprocessing Modules (MPMs): Parallel execution strategies.
+ 
+\end_layout
+
+\begin_layout Itemize
+A mainly developed threaded MPM is the Worker MPM: Runs several processes,
+ each running a fixed number of threads.
+\end_layout
+
+\begin_layout BeginFrame
+Apache Web Server
+\end_layout
+
+\begin_layout FrameSubtitle
+Worker MPM
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename Apache-Worker-MPM.png
+	lyxscale 50
+	height 6cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+Apache Cache Module - mod_mem_cache
+\end_layout
+
+\begin_layout Itemize
+There isn't much interaction between the worker threads.
+\end_layout
+
+\begin_layout Itemize
+The cache module enables worker threads of the same process to share cached
+ pages in memory.
+\end_layout
+
+\begin_layout Itemize
+Currently implemented with one big lock.
+\end_layout
+
+\begin_layout Subsection
+Transactification Process
+\end_layout
+
+\begin_layout BeginFrame
+Software Transactional Memory in C/C++
+\end_layout
+
+\begin_layout Standard
+Several STM implementations for C are available as libraries.
+\end_layout
+
+\begin_layout Itemize
+Require accessing global variables through library functions / macros.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+
+\backslash
+uncover<2->{
+\end_layout
+
+\end_inset
+
+A few compiler based implementations:
+\end_layout
+
+\begin_layout Itemize
+Tanger - An open-source academic LLVM-based STM compiler.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Support using any STM library through a known interface.
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+}
+\end_layout
+
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+
+\backslash
+uncover<3->{
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+ICC - Intel's experimental STM compiler
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Works with Intel's own transactional memory manager.
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Transactifying Compiler
+\end_layout
+
+\begin_layout Itemize
+Modifies code inside atomic blocks to access globals through the STM.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<2->
+\end_layout
+
+\end_inset
+
+Function calls.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<3->
+\end_layout
+
+\end_inset
+
+Indirect function calls.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+<4->
+\end_layout
+
+\end_inset
+
+Library functions.
+\end_layout
+
+\begin_layout BeginFrame
+Commit handlers
+\end_layout
+
+\begin_layout Standard
+A common pattern we found, missing in both Tanger and ICC.
+\end_layout
+
+\begin_layout Example
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+atomic {
+\end_layout
+
+\begin_layout LyX-Code
+  if (--object.reference_count) {
+\end_layout
+
+\begin_layout LyX-Code
+    cache_remove(object);
+\end_layout
+
+\begin_layout LyX-Code
+    destroy(object);
+\end_layout
+
+\begin_layout LyX-Code
+  }
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Commit handlers
+\end_layout
+
+\begin_layout Standard
+Should be converted to:
+\end_layout
+
+\begin_layout Example
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+atomic {
+\end_layout
+
+\begin_layout LyX-Code
+  if (--object.reference_count == 0) {
+\end_layout
+
+\begin_layout LyX-Code
+    cache_remove(object);
+\end_layout
+
+\begin_layout LyX-Code
+  }
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\begin_layout LyX-Code
+if (object.reference_count == 0)
+\end_layout
+
+\begin_layout LyX-Code
+  destroy(object);
+\end_layout
+
+\begin_layout LyX-Code
+
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Commit handlers
+\end_layout
+
+\begin_layout Standard
+It would be nice to have:
+\end_layout
+
+\begin_layout Example
+
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+atomic {
+\end_layout
+
+\begin_layout LyX-Code
+  if (--object.reference_count == 0) {
+\end_layout
+
+\begin_layout LyX-Code
+    cache_remove(object);
+\end_layout
+
+\begin_layout LyX-Code
+    on_commit(destroy, object);
+\end_layout
+
+\begin_layout LyX-Code
+  }
+\end_layout
+
+\begin_layout LyX-Code
+}
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Evaluation
+\end_layout
+
+\begin_layout BeginFrame
+Evaluation
+\end_layout
+
+\begin_layout Standard
+Evaluation of a web server requires:
+\end_layout
+
+\begin_layout Itemize
+A data set.
+\end_layout
+
+\begin_layout Itemize
+Client strategy
+\end_layout
+
+\begin_layout Standard
+We chose
+\end_layout
+
+\begin_layout Itemize
+Data set of small files (man pages) so that the throughput of the NIC won't
+ be the bottleneck.
+\end_layout
+
+\begin_layout Itemize
+Running as many clients concurrently as possible to create contention on
+ the server and its cache.
+\end_layout
+
+\begin_layout Itemize
+Requesting pages according to Zipf distribution - to control locality.
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename 325px-Zipf_distribution_CMF.png
+	lyxscale 50
+	height 3cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout BeginFrame
+Current Results
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename transaction_rate.png
+	lyxscale 50
+	height 4cm
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Pause
+
+\end_layout
+
+\begin_layout Block
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+{
+\lang english
+Theory
+}
+\lang english
+ 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+The linux file cache contains the entire data set => Apache's cache just
+ gets in the way.
+\end_layout
+
+\begin_layout Itemize
+Dynamically generated content might give the cache an advantage.
+\end_layout
+
+\end_deeper
+\begin_layout BeginFrame
+Thank you
+\end_layout
+
+\begin_layout Block
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+{Questions}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Block
+?
+\end_layout
+
+\begin_layout EndFrame
+
+\end_layout
+
+\end_body
+\end_document
