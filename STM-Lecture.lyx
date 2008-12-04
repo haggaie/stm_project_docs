@@ -1446,6 +1446,10 @@ Running as many clients concurrently as possible to create contention on
 Requesting pages according to Zipf distribution - to control locality.
 \end_layout
 
+\begin_layout BeginFrame
+Initial Results
+\end_layout
+
 \begin_layout Standard
 \align center
 \begin_inset Graphics
@@ -1456,10 +1460,6 @@ Requesting pages according to Zipf distribution - to control locality.
 \end_inset
 
 
-\end_layout
-
-\begin_layout BeginFrame
-Initial Results
 \end_layout
 
 \begin_layout Standard
@@ -1474,8 +1474,8 @@ Initial Results
 
 \end_layout
 
-\begin_layout Pause
-
+\begin_layout BeginFrame
+Computational Workload
 \end_layout
 
 \begin_layout Block
@@ -1503,10 +1503,6 @@ Dynamically generated content might give the cache an advantage.
 \end_layout
 
 \end_deeper
-\begin_layout BeginFrame
-Computational Workload
-\end_layout
-
 \begin_layout Itemize
 Serve the same workload though 
 \begin_inset ERT
