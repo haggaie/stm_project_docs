@@ -1446,12 +1446,16 @@ Running as many clients concurrently as possible to create contention on
 Requesting pages according to Zipf distribution - to control locality.
 \end_layout
 
+\begin_layout BeginFrame
+Zipf Distribution
+\end_layout
+
 \begin_layout Standard
 \align center
 \begin_inset Graphics
 	filename 325px-Zipf_distribution_CMF.png
 	lyxscale 50
-	height 3cm
+	height 6cm
 
 \end_inset
 
@@ -1514,6 +1518,10 @@ Initial Results
 \end_layout
 
 \end_deeper
+\begin_layout BeginFrame
+Computational Workload
+\end_layout
+
 \begin_layout Block
 \begin_inset ERT
 status open
@@ -1530,8 +1538,13 @@ status open
 
 \begin_deeper
 \begin_layout Itemize
-The linux file cache contains the entire data set => Apache's cache just
- gets in the way.
+The linux file cache contains the entire data set 
+\begin_inset Formula $\Rightarrow$
+\end_inset
+
+
+\newline
+Apache's cache just gets in the way.
 \end_layout
 
 \begin_layout Itemize
@@ -1539,10 +1552,6 @@ Dynamically generated content might give the cache an advantage.
 \end_layout
 
 \end_deeper
-\begin_layout BeginFrame
-Computational Workload
-\end_layout
-
 \begin_layout Itemize
 Serve the same workload though 
 \begin_inset ERT
@@ -1737,6 +1746,7 @@ status open
 
 \end_layout
 
+\begin_deeper
 \begin_layout Itemize
 The car analogy graphics from Intel's presentation.
 \end_layout
@@ -1745,6 +1755,7 @@ The car analogy graphics from Intel's presentation.
 The kernel quote from Maurice Herlihy's presentation.
 \end_layout
 
+\end_deeper
 \begin_layout Pause
 
 \end_layout
