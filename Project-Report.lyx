@@ -1,4 +1,4 @@
-#LyX 1.5.3 created this file. For more info see http://www.lyx.org/
+#LyX 1.5.6 created this file. For more info see http://www.lyx.org/
 \lyxformat 276
 \begin_document
 \begin_header
@@ -38,6 +38,7 @@
 \tracking_changes false
 \output_changes false
 \author "" 
+\author "" 
 \end_header
 
 \begin_body
@@ -59,7 +60,15 @@ Haggai Eran, Ohad Lutzky
 \end_layout
 
 \begin_layout Abstract
-[todo]
+Transactional Memory systems attempt to give multiprocessor programmers
+ the ease of use of course-grained locks with the performance scalability
+ of fine-grained locks.
+ With the development of these systems a need for performance evaluation
+ methods has emerged.
+ This project offers a benchmark for transactional memory systems based
+ on the popular Apache webserver.
+ Results of running it with Intel's transactional memory manager have shown
+ comparable performance to locking.
 \end_layout
 
 \begin_layout Section
