@@ -57,6 +57,16 @@ Haggai Eran, Ohad Lutzky
 Advisor: Zvika Guz, Idit Keidar
 \end_layout
 
+\begin_layout Standard
+\begin_inset Graphics
+	filename logo.png
+	width 100text%
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Abstract
 Transactional Memory systems attempt to give multiprocessor programmers
  the ease of use of course-grained locks with the performance scalability
