@@ -1,10 +1,10 @@
-#LyX 1.5.6 created this file. For more info see http://www.lyx.org/
+#LyX 1.5.3 created this file. For more info see http://www.lyx.org/
 \lyxformat 276
 \begin_document
 \begin_header
 \textclass amsart
 \begin_preamble
-\usepackage{a4wide}
+\usepackage{hyperref}
 \end_preamble
 \language english
 \inputencoding auto
@@ -27,7 +27,11 @@
 \cite_engine basic
 \use_bibtopic false
 \paperorientation portrait
-\secnumdepth 0
+\leftmargin 1cm
+\topmargin 2cm
+\rightmargin 1cm
+\bottommargin 2cm
+\secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
 \defskip medskip
@@ -49,10 +53,36 @@ Transactional Memory Evaluation using Apache Webserver
 
 \begin_layout Author
 Haggai Eran, Ohad Lutzky
+\newline
+Advisor: Zvika Guz
 \end_layout
 
 \begin_layout Standard
-\begin_inset LatexCommand tableofcontents
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+%
+\backslash
+begin{titlepage}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+%
+\backslash
+end{titlepage}
+\end_layout
 
 \end_inset
 
@@ -71,25 +101,658 @@ Transactional Memory systems attempt to give multiprocessor programmers
  comparable performance to locking.
 \end_layout
 
+\begin_layout Standard
+\begin_inset LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FloatList figure
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Introduction
+\end_layout
+
+\begin_layout Subsection
+Transactional Memory
+\end_layout
+
+\begin_layout Standard
+Transactional memory has emerged recently as an alternative synchronization
+ method for parallel processing.
+ A transaction is defined as an series of read and write operations and
+ computations that should be executed atomically.
+ The transactional memory system executes each transaction speculatively,
+ without waiting for locks, and detects conflicts where two transactions
+ might change global data in a way that distrubs atomicity, and 
+\emph on
+abort
+\emph default
+ one of the transactions, discarding all of its changes.
+ If no such collision occurs, the transaction can 
+\emph on
+commit
+\emph default
+, and its changes become visible to all other transactions.
+\end_layout
+
+\begin_layout Standard
+Many implementations for transactional memory, both in hardware had been
+ suggested.
+ This project offers a way to evaluate performance of such software transactiona
+l memory systems.
+\end_layout
+
+\begin_layout Subsection
+Project Goal
+\end_layout
+
+\begin_layout Standard
+Since transactional memory is a rather new technology, without many working
+ applications, there has been a need for an evaluation tool to compare performan
+ce of various implementations.
+ In the past researchers used a simple toy applications that would manipulate
+ a simple shared data structure as a benchmark.
+ 
+\emph on
+STAMP
+\emph default
+
+\begin_inset LatexCommand cite
+key "caominh:stamp:iiswc:2008"
+
+\end_inset
+
+, a more comprehensive benchmarking suite have been published, which contains
+ several algorithms, but still running out of the context of a real application.
+\end_layout
+
+\begin_layout Standard
+The goal of this project was to create a benchmark for software transactional
+ memory systems based on a real-world application, and examining the issues
+ of working using STM with a large scale application.
+ 
 \end_layout
 
 \begin_layout Section
 Design
 \end_layout
 
+\begin_layout Standard
+
+\end_layout
+
+\begin_layout Subsection
+STM Library and Tools
+\end_layout
+
+\begin_layout Subsubsection
+Library or Compiler
+\end_layout
+
+\begin_layout Standard
+C and C++ STM systems divide into two kinds: Library based and compiler
+ based.
+ Library based STMs are built as a C library.
+ Every transaction begins with a call into the library, and commits by another
+ call.
+ All reads and writes to global variables must be done through special library
+ functions when in a transaction.
+ This requires a great amount of work for converting an application to use
+ STM.
+ Not only accesses to global memory in the function that started the transaction
+ must be converted, but also any access from any function being called from
+ this function.
+ 
+\end_layout
+
+\begin_layout Standard
+In contrast, compiler-based STM use a specialized compiler, which has extended
+ syntax for transactional memory atomic blocks.
+ The compiler can then automatically convert memory accesses inside transactions
+ into calls to the underlying library, a process sometimes referred as 
+\emph on
+transactifycation
+\emph default
+.
+ 
+\end_layout
+
+\begin_layout Subsubsection
+Tanger
+\end_layout
+
+\begin_layout Standard
+The Tanger
+\begin_inset LatexCommand cite
+key "felber2007tanger"
+
+\end_inset
+
+ transctifying compiler is an open-source academic compiler extension for
+ LLVM
+\begin_inset LatexCommand cite
+key "LLVM:CGO04"
+
+\end_inset
+
+, an extensible compiler framework.
+ Tanger aims at creating a transactifying compiler that is independant of
+ the STM system used.
+ It works with the tinySTM
+\begin_inset LatexCommand cite
+key "felber2008tinystm"
+
+\end_inset
+
+ library, but can easily be extended to use other STM libraries by writing
+ a simple plugin.
+\end_layout
+
+\begin_layout Standard
+Tanger creates a transactified version of each function in a compilation
+ unit.
+ Every function call inside a transaction is then converted to a call to
+ the new version.
+ This method is a major disadvantage when working on a large application.
+ Many functions do not need a transactified version and this causes uneeded
+ work for the compiler and the linker.
+ Moreover, sometimes the transactifyication might fail because of calls
+ to functions whose source is not available and cannot be transactified.
+ This can cause the entire build process to fail, where in fact the code
+ can be transactified without any error.
+\end_layout
+
+\begin_layout Subsubsection
+Intel C++ STM Compiler Prototype
+\end_layout
+
+\begin_layout Standard
+Intel has published
+\begin_inset LatexCommand cite
+key "icc"
+
+\end_inset
+
+ an experimental STM compiler based on their industrial compiler ICC.
+ It solved the above problem by adding some new function attributes to the
+ language that tell the compiler which functions need to be transactified.
+ The attribute 
+\family typewriter
+tm_callable
+\family default
+ tells the compiler that a transactified version of the function will be
+ needed.
+ This way only functions that are required inside transactions can be marked
+ as 
+\family typewriter
+tm_callable 
+\family default
+and be transactified.
+\end_layout
+
+\begin_layout Standard
+ICC [currently?] works with Intel's own transactional memory manager.
+ It has the disadvantage of being a closed source commercial application,
+ and [currently? (check the ABI)] doesn't enable switching to different
+ STM libraries.
+\end_layout
+
+\begin_layout Standard
+We chose working with ICC since its selective transactifycation ability
+ was crucial to working with a large application such as Apache.
+\end_layout
+
+\begin_layout Subsection
+Apache Webserver
+\end_layout
+
+\begin_layout Subsubsection
+Introduction
+\end_layout
+
+\begin_layout Standard
+Apache
+\begin_inset LatexCommand cite
+key "apache"
+
+\end_inset
+
+ HTTP server is a popular web server application written in C.
+ It supports working on multiprocessor machines with several multi-processing
+ modules (MPMs) each offering a different strategy for handling requests
+ and distributing the work.
+ The most popular threaded MPM is the 
+\emph on
+worker 
+\emph default
+MPM, which works by running multiple worker-threads under several processes,
+ each thread handles a single request at a time.
+ In each such process there are several worker threads, and also a listener
+ thread that fetches incoming requests and dispatches them to the available
+ workers.
+ 
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Standard
+\begin_inset Caption
+
+\begin_layout Standard
+Apache worker MPM architecture
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename presentation/Apache-Worker-MPM.png
+	lyxscale 50
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Cache module
+\end_layout
+
+\begin_layout Standard
+There are not many points of interaction between the worker threads themselves,
+ where transactional memory can be used.
+ One such place is Apache's memory cache implemented by the 
+\family typewriter
+mod_mem_cache
+\family default
+
+\begin_inset LatexCommand cite
+key "apache:mod_mem_cache"
+
+\end_inset
+
+ module.
+ This module enables the workers of each process to share a cache of recently
+ served requests.
+ A new request can be served from the memory cache, and save the time required
+ to access the disk and generate the requested page.
+ Since the cache is shared between multiple threads, it is synchronized
+ by a single lock, therefore a good candidate for converting into transactional
+ memory.
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset LatexCommand label
+name "sub:Conversion-Process"
+
+\end_inset
+
+Conversion Process
+\end_layout
+
+\begin_layout Standard
+The conversion process included converting critical sections protected by
+ the cache module's lock into atomic blocks, and decorating required functions
+ as 
+\family typewriter
+tm_callable
+\family default
+.
+ The module had used atomic instructions for some memory accesses, and these
+ were converted to full transactions in atomic blocks, so that collisions
+ with these accesses will be detected.
+\end_layout
+
+\begin_layout Standard
+Some transactions, after conversion contained code that belonged with the
+ transactions, but didn't need neccessarily to run atomically with the transacti
+on.
+ An example might be a transaction removing an object from the cache, and
+ freeing its memory.
+ While the removal operation must be protected inside a transaction, as
+ it is using the shared memory structure of the cache, the memory release
+ can happen any time later, since no other thread can point to the removed
+ object after it had been removed from the cache.
+ 
+\end_layout
+
+\begin_layout Standard
+For lock based systems, having the memory release as part of the critical
+ section might cause a thread to hold the critical section a little longer
+ than needed, but doesn't cause any problems other than that.
+ On transactional memory systems, having accesses to other memory structures
+ such as those required by memory management might cause collisions with
+ other threads, thus slowing down the system in a similar way.
+ In addition, the cleanup functions need to be transactified, which requires
+ additional work both from the programmer and the compiler.
+\end_layout
+
+\begin_layout Standard
+In our case, we chose not to transactify such functions, but instead remove
+ them from the atomic section, and execute them after the transaction had
+ committed.
+ Although this requires some changes to the code, the changes are limited
+ to the call-site, and need not modify any of the called libraries.
+\end_layout
+
+\begin_layout Section
+Evaluation
+\end_layout
+
+\begin_layout Standard
+The transactified web server was evaluated using 
+\emph on
+Siege
+\emph default
+
+\begin_inset LatexCommand cite
+key "siege"
+
+\end_inset
+
+, an HTTP load testing tool.
+ The server was loaded with the set of UNIX man-pages - a set of small textual
+ files typical of some web sites.
+ Each page was served using the 
+\emph on
+man2html
+\emph default
+
+\begin_inset LatexCommand cite
+key "man2html"
+
+\end_inset
+
+ program, uncompressed and converted into HTML, to make sure the serving
+ of files requires enough computational resources to make the use of cache
+ worthwhile.
+\end_layout
+
+\begin_layout Standard
+The pages were requested randomly according to Zipf distribution
+\begin_inset Float figure
+placement h
+wide false
+sideways false
+status collapsed
+
+\begin_layout Standard
+\begin_inset Caption
+
+\begin_layout Standard
+Zipf Distribution
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename presentation/325px-Zipf_distribution_CMF.png
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
+\end_inset
+
+, whose paramter 
+\begin_inset Formula $s$
+\end_inset
+
+ determines how frequently the most popular pages were visited, thus controlling
+ the amount of locality in the requests.
+\end_layout
+
+\begin_layout Standard
+The experiments were done with two computers connected using Gigabit ethernet.
+ The machine running the server was a 4 processors SMP of dual core 2.66GHz
+ Xeons with 8GB of RAM, and the client machine was a 2 processors SMP of
+ quad core 2.33Ghz E5410 Xeons with 8GB of RAM.
+\end_layout
+
+\begin_layout Standard
+We compared the average latency and request throughput when running on different
+ number of cores, and with different 
+\begin_inset Formula $s$
+\end_inset
+
+ values.
+ For every graph there are three experiments comparing the results of an
+ Apache server running without a cache, a cached version without our transaction
+al modifications, and the transactified version.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Standard
+\begin_inset Caption
+
+\begin_layout Standard
+\begin_inset Formula $s=1$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename presentation/average_response_time-s=1.png
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename presentation/transaction_rate-s=1.png
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Standard
+\begin_inset Caption
+
+\begin_layout Standard
+\begin_inset Formula $s=2$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename presentation/average_response_time-s=2.png
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename presentation/transaction_rate-s=2.png
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+placement H
+wide false
+sideways false
+status collapsed
+
+\begin_layout Standard
+\begin_inset Caption
+
+\begin_layout Standard
+\begin_inset Formula $s=3$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+\begin_inset Graphics
+	filename presentation/average_response_time-s=3.png
+	width 50text%
+
+\end_inset
+
+
+\begin_inset Graphics
+	filename presentation/transaction_rate-s=3.png
+	width 50text%
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Conclusions
 \end_layout
 
-\begin_layout Section
+\begin_layout Subsection
+Results
+\end_layout
+
+\begin_layout Standard
+The results show the STM version achieving comparable performance to that
+ of the original version, and both improve the performance in a significant
+ way with regard to the uncached version.
+ With higher locality, and a large number of processors, there is a decrease
+ in performance due to the higher contention on the cache.
+\end_layout
+
+\begin_layout Subsection
+Commit Handlers
+\end_layout
+
+\begin_layout Standard
+The pattern we described in section 
+\begin_inset LatexCommand ref
+reference "sub:Conversion-Process"
+
+\end_inset
+
+, of moving transactions after-effects out of the transactions could be
+ made more simple for the programmer by the addition of compiler or library
+ support.
+ Commit handlers (also suggested in 
+\begin_inset LatexCommand cite
+key "tm:commit-handlers"
+
+\end_inset
+
+) allow a transaction to register actions to be executed only after the
+ transaction has committed.
+ Using such a construct would allow the modifications to current code to
+ be simpler and make conversion to transactional memory easier.
+\end_layout
+
+\begin_layout Subsection
 Further Research
 \end_layout
 
 \begin_layout Standard
+There are many STM systems currently available, and one immediate direction
+ would be to compare them using this benchmark.
+ This would require Intel to publish their ABI for the compiler, and writing
+ plugins for any such system.
+ 
+\end_layout
+
+\begin_layout Standard
+In addition, there are other applications that might be interesting as transacti
+onal memory applications, following the methods we used.
+\end_layout
+
+\begin_layout Standard
 \begin_inset LatexCommand bibtex
-options "bibtotoc,plain"
+options "bibtotoc,plainurl"
 bibfiles "references"
 
 \end_inset
@@ -99,6 +762,198 @@ bibfiles "references"
 
 \begin_layout Section
 Appendix I - Developer Guide
+\end_layout
+
+\begin_layout Subsection
+Directory Structure
+\end_layout
+
+\begin_layout Standard
+The project main directory contains the following subdirectories.
+\end_layout
+
+\begin_layout Description
+httpd-2.2.x The modified version of Apache, configured to use transactional
+ memory
+\end_layout
+
+\begin_layout Description
+httpd-2.2.x.no-transactions Another copy of the modified version of Apache,
+ configured not to use transactional memory.
+\end_layout
+
+\begin_layout Description
+cache-conf An Apache configuration folder configured to use the man2html
+ workload, with mod_mem_cache enabled.
+\end_layout
+
+\begin_layout Description
+no-cache-conf An Apache configuration folder configured to use the man2html
+ workload, with mod_mem_cache disabled.
+\end_layout
+
+\begin_layout Description
+doc The documentation of the project, including this document, and the project's
+ presentation.
+\end_layout
+
+\begin_layout Description
+man The man program distribution, including the man2html cgi script.
+\end_layout
+
+\begin_layout Description
+man2html symbolic link into 
+\series bold
+man/man2html/scripts
+\series default
+, reffered to by Apache's configuration folders 
+\series bold
+cache-conf
+\series default
+ and 
+\series bold
+no-cache-conf
+\series default
+.
+\end_layout
+
+\begin_layout Description
+test Scripts needed for running the benchmarks.
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+runall_siege.py A script that runs all the needed experiments one by one.
+\end_layout
+
+\begin_layout Description
+zipf_distrib.py A utility script that takes a list of URLs as an input, and
+ outputs a list where every url appears a number of times according to Zipf
+ distribution.
+\end_layout
+
+\begin_layout Description
+url-lists A subdirectory with already generated URL lists.
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Server Side Installation
+\end_layout
+
+\begin_layout Standard
+The following applies to both versions of apache.
+\end_layout
+
+\begin_layout Itemize
+Install Intel STM C++ Compiler (
+\begin_inset LatexCommand url
+target "http://tinyurl.com/66hkyt"
+
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Itemize
+Configure apache using the parameters given in the 
+\family typewriter
+configure-cmd
+\family default
+ file.
+\end_layout
+
+\begin_layout Itemize
+Build using the 
+\family typewriter
+make
+\family default
+ command.
+\end_layout
+
+\begin_layout Itemize
+Configure and install the man2html program as described in 
+\family typewriter
+man/INSTALL
+\family default
+.
+\end_layout
+
+\begin_layout Subsection
+Client Side Installation
+\end_layout
+
+\begin_layout Itemize
+Unpack, configure and install siege, from the 
+\family typewriter
+siege-2.67.tar.gz
+\family default
+ file.
+ Further information is in the package in the 
+\family typewriter
+INSTALL
+\family default
+ and 
+\family typewriter
+README
+\family default
+ files.
+\end_layout
+
+\begin_layout Itemize
+Copy the URL lists from 
+\family typewriter
+test/url-lists
+\family default
+ to the client machine.
+\end_layout
+
+\begin_layout Subsection
+Execution
+\end_layout
+
+\begin_layout Standard
+The 
+\family typewriter
+test/runall_siege.py
+\family default
+ script is intended to run from the server machine, and connect to the client
+ by ssh.
+ To avoid typing the password for every connection it is recommended to
+ set up a public-key login to the client machine.
+\end_layout
+
+\begin_layout Standard
+Before running, the following fields must be set in the script:
+\end_layout
+
+\begin_layout Itemize
+Client host name.
+\end_layout
+
+\begin_layout Itemize
+URL list names
+\end_layout
+
+\begin_layout Standard
+Set the siege output file in 
+\family typewriter
+~/.siegerc
+\family default
+ on the client machine, by editing the 
+\emph on
+logfile
+\emph default
+ entry.
+\end_layout
+
+\begin_layout Standard
+Run the 
+\family typewriter
+test/runall_siege.py
+\family default
+ script, the results will be saved on the client machine in the chosen output
+ file.
 \end_layout
 
 \end_body
