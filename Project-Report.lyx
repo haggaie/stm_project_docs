@@ -2,7 +2,7 @@
 \lyxformat 276
 \begin_document
 \begin_header
-\textclass amsart
+\textclass paper
 \begin_preamble
 \usepackage{hyperref}
 \end_preamble
@@ -48,45 +48,13 @@
 \begin_body
 
 \begin_layout Title
-Transactional Memory Evaluation using Apache Webserver
+Transactional Memory Evaluation using Apache Webserver - Project Report
 \end_layout
 
 \begin_layout Author
 Haggai Eran, Ohad Lutzky
 \newline
-Advisor: Zvika Guz
-\end_layout
-
-\begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Standard
-
-%
-\backslash
-begin{titlepage}
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Standard
-
-%
-\backslash
-end{titlepage}
-\end_layout
-
-\end_inset
-
-
+Advisor: Zvika Guz, Idit Keidar
 \end_layout
 
 \begin_layout Abstract
@@ -99,6 +67,44 @@ Transactional Memory systems attempt to give multiprocessor programmers
  on the popular Apache webserver.
  Results of running it with Intel's transactional memory manager have shown
  comparable performance to locking.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+
+\backslash
+begin{titlepage}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+We would like to thank Torvald Reigel from Dresden University of Technology,
+ who offerred us great help with the Tanger tool, and even though we didn't
+ eventually choose this tool, we appreciate the effort of his help.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+
+\backslash
+end{titlepage}
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
