@@ -1055,6 +1055,23 @@ target "http://freshmeat.net/projects/schedtool/?topic_id=136"
 \end_layout
 
 \begin_layout Itemize
+Unpack apr and apr-util packages into 
+\family typewriter
+<httpd>srclib/apr
+\family default
+ and 
+\family typewriter
+<httpd>/srclib/apr-util
+\family default
+ respectively.
+ (Where 
+\family typewriter
+<httpd>
+\family default
+ is the path of the version you are compiling).
+\end_layout
+
+\begin_layout Itemize
 Configure apache using the parameters given in the 
 \family typewriter
 configure-cmd
