@@ -1,10 +1,11 @@
-#LyX 1.5.3 created this file. For more info see http://www.lyx.org/
+#LyX 1.5.6 created this file. For more info see http://www.lyx.org/
 \lyxformat 276
 \begin_document
 \begin_header
 \textclass paper
 \begin_preamble
 \usepackage{hyperref}
+\usepackage{appendix}
 \end_preamble
 \language english
 \inputencoding auto
@@ -18,7 +19,7 @@
 \font_tt_scale 100
 \graphics default
 \float_placement H
-\paperfontsize default
+\paperfontsize 12
 \spacing single
 \papersize a4paper
 \use_geometry false
@@ -32,7 +33,7 @@
 \rightmargin 1cm
 \bottommargin 2cm
 \secnumdepth 3
-\tocdepth 3
+\tocdepth 2
 \paragraph_separation indent
 \defskip medskip
 \quotes_language english
@@ -92,16 +93,9 @@ begin{titlepage}
 
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
 We would like to thank Torvald Reigel from Dresden University of Technology,
  who offerred us great help with the Tanger tool, and even though we didn't
  eventually choose this tool, we appreciate the effort of his help.
-\end_layout
-
-\begin_layout Standard
 \begin_inset ERT
 status open
 
@@ -163,8 +157,13 @@ commit
 \begin_layout Standard
 Many implementations for transactional memory, both in hardware had been
  suggested.
- This project offers a way to evaluate performance of such software transactiona
-l memory systems.
+ Software transactional memory (STM) works by managing the transactions
+ and all their accesses to shared memory in software.
+ Some implementations in hardware has been offerred, that take advantage
+ of the cache coherency mechanism to provide a faster mechanism for detecting
+ collisions and storing temporary transaction data.
+ This project offers a way to evaluate performance of software transactional
+ memory systems.
 \end_layout
 
 \begin_layout Subsection
@@ -316,15 +315,42 @@ and be transactified.
 \end_layout
 
 \begin_layout Standard
-ICC [currently?] works with Intel's own transactional memory manager.
+ICC works with Intel's own transactional memory manager.
  It has the disadvantage of being a closed source commercial application,
- and [currently? (check the ABI)] doesn't enable switching to different
+ and up until late phases of our project, didn't enable switching to different
  STM libraries.
+ Recently Intel have published their ABI
+\begin_inset LatexCommand cite
+key "icc:abi"
+
+\end_inset
+
+, allowing other libraries to be used similarly to tanger.
 \end_layout
 
 \begin_layout Standard
 We chose working with ICC since its selective transactifycation ability
  was crucial to working with a large application such as Apache.
+\end_layout
+
+\begin_layout Subsubsection
+GCC for Transactional Memory
+\end_layout
+
+\begin_layout Standard
+An extension to the Gnu Compiler Collection (GCC) is being developed
+\begin_inset LatexCommand cite
+key "gcctm"
+
+\end_inset
+
+ to enable transactional memory support for GCC.
+ It is intended to work with tinySTM, but being open source, other STM systems
+ will probably be ported too.
+ The syntax of the C/C++ language extensions is designed to be compatible
+ with ICC.
+ This means that our project will probably be compilable under GCC with
+ this extension, without much modification.
 \end_layout
 
 \begin_layout Subsection
@@ -416,6 +442,56 @@ key "apache:mod_mem_cache"
  memory.
 \end_layout
 
+\begin_layout Standard
+Apache's cache is implemented with a couple of modules.
+ The first, 
+\family typewriter
+mod_cache
+\family default
+
+\begin_inset LatexCommand cite
+key "apache:mod_cache"
+
+\end_inset
+
+, implements the logic related to caching.
+ It tests the metadata of each requests to see if it can be supplied from
+ the cache, according to the request's HTTP headers and the system configuration.
+ It uses one of the underlying cache implementation modules, 
+\family typewriter
+mod_mem_cache
+\family default
+ or 
+\family typewriter
+mod_disk_cache
+\begin_inset LatexCommand cite
+key "apache:mod_disk_cache"
+
+\end_inset
+
+
+\family default
+ to do the actual caching.
+\end_layout
+
+\begin_layout Standard
+The 
+\family typewriter
+mod_mem_cache
+\family default
+ module implements a memory cache using a shared hash table and priority
+ queue.
+ The key to the hash table is the URL of the request, converted into a canonical
+ form.
+ The cache is limited both by size and by the number of elements, and by
+ memory size, so on insertion, sometimes lower priority entries are removed
+ from the cache.
+ The priority is deterimined by one of two algorithms: LRU, removing the
+ least recently used entries first, and GDSF (Greedy Dual Size Frequency)
+ assigning score to entries based on the cost of a cache miss, and the entry
+ size.
+\end_layout
+
 \begin_layout Subsubsection
 \begin_inset LatexCommand label
 name "sub:Conversion-Process"
@@ -503,6 +579,32 @@ key "man2html"
  worthwhile.
 \end_layout
 
+\begin_layout Subsubsection
+man2html
+\end_layout
+
+\begin_layout Standard
+The man2html program is a Common Gateway Interface (CGI) program that serves
+ unix manual (man) pages on internet sites.
+ The pages are usually stores compressed in gzip format, and formatted using
+ the troff format.
+ The program receives a request for a man page from the webserver, uncompresses
+ the required file and converts it to HTML.
+ As every CGI program it outputs the result with relevant HTTP headers.
+\end_layout
+
+\begin_layout Standard
+The default caching policy of apache forbids caching dynamically generated
+ pages such as those of man2html, unless the HTTP headers of the resulting
+ page clearly specify otherwise.
+ To make caching of the man2html pages possible, we modified man2html to
+ output such headers, specifying the output can be cached for one hour.
+\end_layout
+
+\begin_layout Subsubsection
+Zipf distribution
+\end_layout
+
 \begin_layout Standard
 The pages were requested randomly according to Zipf distribution
 \begin_inset Float figure
@@ -548,11 +650,19 @@ Zipf Distribution
  the amount of locality in the requests.
 \end_layout
 
+\begin_layout Subsubsection
+Experiment Hardware
+\end_layout
+
 \begin_layout Standard
 The experiments were done with two computers connected using Gigabit ethernet.
  The machine running the server was a 4 processors SMP of dual core 2.66GHz
  Xeons with 8GB of RAM, and the client machine was a 2 processors SMP of
  quad core 2.33Ghz E5410 Xeons with 8GB of RAM.
+\end_layout
+
+\begin_layout Subsubsection
+Results
 \end_layout
 
 \begin_layout Standard
@@ -737,16 +847,38 @@ reference "sub:Conversion-Process"
 , of moving transactions after-effects out of the transactions could be
  made more simple for the programmer by the addition of compiler or library
  support.
- Commit handlers (also suggested in 
+ Commit handlers allow a transaction to register actions to be executed
+ only after the transaction has committed.
+ Using such a construct would allow the modifications to current code to
+ be simpler and make conversion to transactional memory easier.
+\end_layout
+
+\begin_layout Standard
+This mechanism, along with abort and violation handlers, was suggested in
+ 
 \begin_inset LatexCommand cite
 key "tm:commit-handlers"
 
 \end_inset
 
-) allow a transaction to register actions to be executed only after the
- transaction has committed.
- Using such a construct would allow the modifications to current code to
- be simpler and make conversion to transactional memory easier.
+.
+\end_layout
+
+\begin_layout Standard
+Commit handlers are described there as a mechanism that allows finalization
+ of tasks, for instance, a transactional system call such as write to file
+ might have its permanent side effects be executed in a commit handler.
+ Abort and violation handlers are user functions that are called when a
+ transaction is aborted by the user, or becase of a conflict, respectively.
+ They allow transactions with permanent but reversible side-effects to undo
+ their effects.
+ 
+\end_layout
+
+\begin_layout Standard
+To summarise, our experience has shown that these handlers aren't only needed
+ to enhance the transactional memory system's features, but can also make
+ conversion of legacy code easier.
 \end_layout
 
 \begin_layout Subsection
@@ -756,8 +888,8 @@ Further Research
 \begin_layout Standard
 There are many STM systems currently available, and one immediate direction
  would be to compare them using this benchmark.
- This would require Intel to publish their ABI for the compiler, and writing
- plugins for any such system.
+ This would require writing plugins for any such system to match Intel's
+ TM ABI.
  
 \end_layout
 
@@ -776,8 +908,31 @@ bibfiles "references"
 
 \end_layout
 
+\begin_layout Standard
+
+\clearpage
+
+\begin_inset ERT
+status open
+
+\begin_layout Standard
+
+
+\backslash
+appendixpage 
+\backslash
+addappheadtotoc 
+\backslash
+appendix
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
-Appendix I - Developer Guide
+Developer Guide
 \end_layout
 
 \begin_layout Subsection
@@ -840,12 +995,26 @@ test Scripts needed for running the benchmarks.
 \begin_deeper
 \begin_layout Description
 runall_siege.py A script that runs all the needed experiments one by one.
+ (See section 
+\begin_inset LatexCommand ref
+reference "sub:runall_siege.py"
+
+\end_inset
+
+ for details).
 \end_layout
 
 \begin_layout Description
 zipf_distrib.py A utility script that takes a list of URLs as an input, and
  outputs a list where every url appears a number of times according to Zipf
  distribution.
+ (See section 
+\begin_inset LatexCommand ref
+reference "sub:zipf_distrib.py"
+
+\end_inset
+
+ below).
 \end_layout
 
 \begin_layout Description
@@ -865,6 +1034,20 @@ The following applies to both versions of apache.
 Install Intel STM C++ Compiler (
 \begin_inset LatexCommand url
 target "http://tinyurl.com/66hkyt"
+
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Itemize
+Install the 
+\emph on
+schedtool
+\emph default
+ utility for limiting the number of processors Apache will use (
+\begin_inset LatexCommand url
+target "http://freshmeat.net/projects/schedtool/?topic_id=136"
 
 \end_inset
 
@@ -924,8 +1107,95 @@ test/url-lists
  to the client machine.
 \end_layout
 
+\begin_layout Subsubsection
+\begin_inset LatexCommand label
+name "sub:zipf_distrib.py"
+
+\end_inset
+
+URL Lists
+\end_layout
+
+\begin_layout Standard
+This section elaborates the generation of URL lists for the client machines.
+ 
+\end_layout
+
+\begin_layout Itemize
+The starting point for the process is a file containing a list of unique
+ URLs, each in its own line.
+ 
+\end_layout
+
+\begin_layout Itemize
+Using the 
+\family typewriter
+test/zipf_distrib.py
+\family default
+ program, a new list is created that is randomly distributed according to
+ the Zipf distribution.
+ The command line for doing that should be:
+\end_layout
+
+\begin_deeper
+\begin_layout LyX-Code
+zipf_distrib.py 
+\emph on
+s
+\emph default
+ 
+\emph on
+length
+\emph default
+ < 
+\emph on
+input-file
+\emph default
+ > 
+\emph on
+output-file
+\end_layout
+
+\begin_layout Standard
+Where
+\end_layout
+
+\begin_layout Description
+s is the 
+\begin_inset Formula $s$
+\end_inset
+
+ parameter of the Zipf distribution
+\end_layout
+
+\begin_layout Description
+length is the number of URLs in the output.
+\end_layout
+
+\begin_layout Description
+input-file is the input list of URLs.
+\end_layout
+
+\begin_layout Description
+output-file is the output result.
+\end_layout
+
+\end_deeper
+\begin_layout LyX-Code
+
+\end_layout
+
 \begin_layout Subsection
 Execution
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset LatexCommand label
+name "sub:runall_siege.py"
+
+\end_inset
+
+Test Configuration
 \end_layout
 
 \begin_layout Standard
@@ -943,12 +1213,38 @@ test/runall_siege.py
 Before running, the following fields must be set in the script:
 \end_layout
 
-\begin_layout Itemize
-Client host name.
+\begin_layout Description
+CLIENT_HOST Client host name.
 \end_layout
 
-\begin_layout Itemize
-URL list names
+\begin_layout Description
+MAIN_DIR Directory where the project is placed.
+\end_layout
+
+\begin_layout Description
+SCHED_TOOL Path of the schedtool binary.
+ (Can be just 
+\family typewriter
+schedtool
+\family default
+ in case its on the system PATH).
+\end_layout
+
+\begin_layout Description
+URL_LISTS A list of filenames on the client host of the URL list files (Usually
+ there is one for every 
+\begin_inset Formula $s$
+\end_inset
+
+ value needed in the experiment).
+\end_layout
+
+\begin_layout Description
+MIN_CORES,MAX_CORES The minimum and maximum number of cores to test.
+\end_layout
+
+\begin_layout Subsubsection
+Execution
 \end_layout
 
 \begin_layout Standard
