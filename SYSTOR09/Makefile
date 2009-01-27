@@ -32,7 +32,7 @@
 
 # $Id: Makefile,v 1.18 2006-06-19 10:58:11 mairas Exp $
 
-LATEX	= latex
+LATEX	= pdflatex
 BIBTEX	= bibtex
 MAKEINDEX = makeindex
 XDVI	= xdvi -gamma 4
@@ -93,7 +93,7 @@ define getbibs
 endef
 
 define geteps
-	epses=`perl -ne '@foo=/^[^%]*\\\(includegraphics|psfig)(\[.*?\])?\{(.*?)\}/g;if (defined($$foo[2])) { if ($$foo[2] =~ /.eps$$/) { print "$$foo[2] "; } else { print "$$foo[2].eps "; }}' $< $$deps`
+	epses=`perl -ne '@foo=/^[^%]*\\\(includegraphics|psfig)(\[.*?\])?\{(.*?)\}/g;if (defined($$foo[2])) { print "$$foo[2] "; }' $< $$deps`
 endef
 
 define manconf
