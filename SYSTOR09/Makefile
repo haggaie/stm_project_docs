@@ -36,6 +36,7 @@ LATEX	= pdflatex
 BIBTEX	= bibtex
 MAKEINDEX = makeindex
 XDVI	= xdvi -gamma 4
+EVINCE  = evince
 DVIPS	= dvips
 DVIPDF  = dvipdft
 L2H	= latex2html
@@ -100,7 +101,7 @@ define manconf
 	mandeps=`if test -r $(basename $@).cnf ; then cat $(basename $@).cnf |tr -d '\n\r' ; fi`
 endef
 
-all 	: $(TRG)
+all 	: $(PDF)
 
 .PHONY	: all show clean ps pdf showps veryclean
 
@@ -116,26 +117,24 @@ veryclean	: clean
 	$(getbibs) ; echo $$bibs ; \
 	$(geteps) ; echo $$epses ; \
 	$(manconf) ; echo  $$mandeps  ;\
-	echo "$*.dvi $@ : $< $$deps $$bibs $$epses $$mandeps" > $@ 
+	echo "$*.pdf $@ : $< $$deps $$bibs $$epses $$mandeps" > $@ 
 
 include $(SRC:.tex=.d)
 
 # $(DEP) $(EPSPICS) $(BIBFILE)
-$(TRG)	: %.dvi : %.tex
+$(PDF)	: %.pdf : %.tex
 	  @$(run-latex)
 
 $(PSF)	: %.ps : %.dvi
 	  @$(DVIPS) $< -o $@
 
-$(PDF)  : %.pdf : %.dvi
-	  @$(DVIPDF) -o $@ $<
 # To use pdflatex, comment the two lines above and uncomment the lines below
 #$(PDF) : %.pdf : %.tex
 #	@$(run-pdflatex)
 
 
-show	: $(TRG)
-	  @for i in $(TRG) ; do $(XDVI) $$i & done
+show	: $(PDF)
+	  @for i in $(PDF) ; do $(EVINCE) $$i & done
 
 showps	: $(PSF)
 	  @for i in $(PSF) ; do $(GH) $$i & done
