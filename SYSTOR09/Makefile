@@ -60,6 +60,7 @@ SRC	:= $(shell egrep -l '^[^%]*\\begin\{document\}' *.tex)
 TRG	= $(SRC:%.tex=%.dvi)
 PSF	= $(SRC:%.tex=%.ps)
 PDF	= $(SRC:%.tex=%.pdf)
+ZIP	= $(SRC:%.tex=%.zip)
 
 # These are not
 
@@ -67,6 +68,7 @@ PDF	= $(SRC:%.tex=%.pdf)
 #DEP     := $(shell perl -ne '($$_)=/^[^%]*\\include\{(.*?)\}/;@_=split /,/;foreach $$t (@_) {print "$$t.tex "}' $(SRC))
 #EPSPICS := $(shell perl -ne '@foo=/^[^%]*\\(includegraphics|psfig)(\[.*?\])?\{(.*?)\}/g;if (defined($$foo[2])) { if ($$foo[2] =~ /.eps$$/) { print "$$foo[2] "; } else { print "$$foo[2].eps "; }}' $(SRC) $(DEP))
 
+CLASSFILE=sigplanconf.cls
 
 define run-latex
 	$(COPY);$(LATEX) $<
@@ -117,7 +119,9 @@ veryclean	: clean
 	$(getbibs) ; echo $$bibs ; \
 	$(geteps) ; echo $$epses ; \
 	$(manconf) ; echo  $$mandeps  ;\
-	echo "$*.pdf $@ : $< $$deps $$bibs $$epses $$mandeps" > $@ 
+	echo "$*.pdf $@ : $< $$deps $$bibs $$epses $$mandeps $(CLASSFILE)" > $@ ;\
+	echo "$*.zip : Makefile $< $*.pdf $$deps $$bibs $$epses $$mandeps $(CLASSFILE)" >> $@ ;\
+	echo '	zip $$@ $$^' >> $@
 
 include $(SRC:.tex=.d)
 
@@ -143,10 +147,11 @@ ps	: $(PSF)
 
 pdf	: $(PDF) 
 
+zip : $(ZIP)
+
 # TODO: This probably needs fixing
 html	: @$(DEP) $(EPSPICS)
 	  @$(L2H) $(SRC)
-
 
 
 ######################################################################
