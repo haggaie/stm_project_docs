@@ -59,7 +59,7 @@ keyword1, keyword2
 The text of the paper begins here.
 \section{Related Work}
 \section{Transactifying Apache}
-Apache[apache] HTTP server is a popular web server application written in C. It
+Apache\cite{apache} HTTP server is a popular web server application written in C. It
 supports working on multiprocessor machines with several multi-processing
 modules (MPMs) each offering a different strategy for handling requests and
 distributing the work. The most popular threaded MPM is the worker MPM, which
@@ -78,7 +78,7 @@ dispatches them to the available workers.
 
 There are not many points of interaction between the worker threads themselves,
 where transactional memory can be used. One such place is Apache's memory cache
-implemented by the {\tt mod\_mem\_cache}[apache:mod\_mem\_cache] module. This
+implemented by the {\tt mod\_mem\_cache}\cite{apache:mod_mem_cache} module. This
 module enables the workers of each process to share a cache of recently served
 requests. A new request can be served from the memory cache, and save the time
 required to access the disk and generate the requested page. Since the cache is
@@ -86,11 +86,11 @@ shared between multiple threads, it is synchronized by a single lock, therefore
 a good candidate for converting into transactional memory.
 
 Apache's cache is implemented with a couple of modules. The first, {\tt
-mod\_cache}[apache:mod\_cache], implements the logic related to caching. It
+mod\_cache}\cite{apache:mod_cache}, implements the logic related to caching. It
 tests the metadata of each requests to see if it can be supplied from the cache,
 according to the request's HTTP headers and the system configuration. It uses
 one of the underlying cache implementation modules, {\tt mod\_mem\_cache} or
-{\tt mod\_disk\_cache}[apache:mod\_disk\_cache] to do the actual caching.
+{\tt mod\_disk\_cache}\cite{apache:mod_disk_cache} to do the actual caching.
 
 The {\tt mod\_mem\_cache} module implements a memory cache using a shared hash
 table and priority queue. The key to the hash table is the URL of the request,
@@ -117,10 +117,10 @@ automatically convert memory accesses inside transactions into calls to the
 underlying library, a process sometimes referred as \emph{transactifycation}. 
 
 \subsubsection{Tanger}
-The Tanger[felber2007tanger] transctifying compiler is an open-source academic
-compiler extension for LLVM[LLVM:CGO04], an extensible compiler framework.
+The Tanger\cite{felber2007tanger} transctifying compiler is an open-source academic
+compiler extension for LLVM\cite{LLVM:CGO04}, an extensible compiler framework.
 Tanger aims at creating a transactifying compiler that is independant of the STM
-system used. It works with the tinySTM[felber2008tinystm] library, but can
+system used. It works with the tinySTM\cite{felber2008tinystm} library, but can
 easily be extended to use other STM libraries by writing a simple plugin.
 
 Tanger created a transactified version of each function in a compilation unit.
@@ -142,7 +142,7 @@ annotate which functions should be transactified, however we didn't get a chance
 to try it.
 
 \subsubsection{Intel STM Compiler}
-Intel has published[icc] an experimental STM compiler based on their industrial
+Intel has published\cite{icc} an experimental STM compiler based on their industrial
 compiler ICC. It solved the above problem by adding some new function attributes
 to the language that tell the compiler which functions need to be transactified.
 The attribute {\tt tm\_callable} tells the compiler that a transactified version
@@ -150,11 +150,11 @@ of the function will be needed. This way only functions that are required inside
 transactions can be marked as {\tt tm\_callable} and be transactified.
 
 Although ICC uses a proprietery STM manager, Intel has published their
-ABI[icc:abi] allowing for other STM managers to replace their own. This feature
+ABI\cite{icc:abi} allowing for other STM managers to replace their own. This feature
 and its selective transactifycation ability were the main reasons why we
 preferred ICC.
 
-An extension to the Gnu Compiler Collection (GCC) is being developed[gcctm] to
+An extension to the Gnu Compiler Collection (GCC) is being developed\cite{gcctm} to
 enable transactional memory support for GCC. It is intended to work with
 tinySTM, but being open source, other STM systems will probably be ported too.
 The syntax of the C/C++ language extensions is designed to be compatible with
@@ -197,10 +197,10 @@ fact that Intel added them.]
 
 \section{Evaluation} 
 \subsection{Methodology} 
-The transactified web server was evaluated using \emph{Siege}[siege], an HTTP
+The transactified web server was evaluated using \emph{Siege}\cite{siege}, an HTTP
 load testing tool. The server was loaded with the set of UNIX man-pages - a set
 of small textual files typical of some web sites. Each page was served using the
-\emph{man2html}[man2html] program, uncompressed and converted into HTML, to make
+\emph{man2html}\cite{man2html} program, uncompressed and converted into HTML, to make
 sure the serving of files requires enough computational resources to make the
 use of cache worthwhile.
 
@@ -297,12 +297,14 @@ Acknowledgments, if needed.
 
 \bibliographystyle{plainnat}
 
-\begin{thebibliography}{}
+%\begin{thebibliography}{}
+%
+%\bibitem{smith02}
+%Smith, P. Q. reference text
+%
+%\end{thebibliography}
 
-\bibitem{smith02}
-Smith, P. Q. reference text
-
-\end{thebibliography}
+\bibliography{references}
 
 \end{document}
 
