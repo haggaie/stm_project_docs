@@ -79,7 +79,7 @@ The text of the paper begins here.
 \section{Related Work}
 \section{Background: Software and Tools}
 \subsection{Apache}
-Apache\cite{apache} HTTP server is a popular web server application written in
+Apache ~\cite{apache} HTTP server is a popular web server application written in
 C. It supports working on multiprocessor machines with several multi-processing
 modules (MPMs) each offering a different strategy for handling requests and
 distributing the work. The most popular threaded MPM is the \emph{worker} MPM,
@@ -99,7 +99,7 @@ requests and dispatches them to the available workers, as illustrated in Figure
 
 There are not many points of interaction between the worker threads themselves,
 where transactional memory can be used. One such place is Apache's memory cache
-implemented by the {\tt mod\_mem\_cache}\cite{apache:mod_mem_cache} module. This
+implemented by the {\tt mod\_mem\_cache} ~\cite{apache:mod_mem_cache} module. This
 module enables the workers of each process to share a cache of recently served
 requests. A new request can be served from the memory cache, and save the time
 required to access the disk and generate the requested page. Since the cache is
@@ -107,11 +107,11 @@ shared between multiple threads, it is synchronized by a single lock, therefore
 a good candidate for converting into transactional memory.
 
 Apache's cache is implemented with a couple of modules. The first, {\tt
-mod\_cache}\cite{apache:mod_cache}, implements the logic related to caching. It
+mod\_cache} ~\cite{apache:mod_cache}, implements the logic related to caching. It
 tests the metadata of each requests to see if it can be supplied from the cache,
 according to the request's HTTP headers and the system configuration. It uses
 one of the underlying cache implementation modules, {\tt mod\_mem\_cache} or
-{\tt mod\_disk\_cache}\cite{apache:mod_disk_cache} to do the actual caching.
+{\tt mod\_disk\_cache} ~\cite{apache:mod_disk_cache} to do the actual caching.
 
 The {\tt mod\_mem\_cache} module implements a memory cache using a shared hash
 table and priority queue. The key to the hash table is the URL of the request,
@@ -150,7 +150,7 @@ tool, which transactifies compiled binaries, even without the sources, which
 might be a very important advantage when modifying legacy code.
 
 \subsubsection{Intel STM Compiler}
-Intel has published\cite{icc} an experimental STM compiler based on their industrial
+Intel has published ~\cite{icc} an experimental STM compiler based on their industrial
 compiler ICC. It solved the above problem by adding some new function attributes
 to the language that tell the compiler which functions need to be transactified.
 The attribute {\tt tm\_callable} tells the compiler that a transactified version
@@ -158,7 +158,7 @@ of the function will be needed. This way only functions that are required inside
 transactions can be marked as {\tt tm\_callable} and be transactified.
 
 Although ICC uses a proprietery STM manager, Intel has published their
-ABI\cite{icc:abi} allowing for other STM managers to replace their own. This feature
+ABI ~\cite{icc:abi} allowing for other STM managers to replace their own. This feature
 and its selective transactification ability were the main reasons why we
 preferred ICC.
 
@@ -166,7 +166,7 @@ In the latest version of Intel STM Compiler, support for abort and commit
 handlers was in fact added to the system, by registering a callback function
 from inside a transaction.
 
-An extension to the Gnu Compiler Collection (GCC) is being developed\cite{gcctm} to
+An extension to the Gnu Compiler Collection (GCC) is being developed ~\cite{gcctm} to
 enable transactional memory support for GCC. It is intended to work with
 tinySTM, but being open source, other STM systems will probably be ported too.
 The syntax of the C/C++ language extensions is designed to be compatible with
@@ -391,10 +391,10 @@ process, or having only black box measurements of the system.
 
 \section{Evaluation} 
 \subsection{Methodology} 
-The transactified web server was evaluated using \emph{Siege}\cite{siege}, an
+The transactified web server was evaluated using \emph{Siege} ~\cite{siege}, an
 HTTP load testing tool. The server was loaded with the set of UNIX man-pages - a
 set of small textual files typical of some web sites. Each page was served using
-the \emph{man2html}\cite{man2html} program, uncompressed and converted into
+the \emph{man2html} ~\cite{man2html} program, uncompressed and converted into
 HTML, to make sure the serving of files requires enough computational resources
 to make the use of cache worthwhile.
 
@@ -433,6 +433,13 @@ version.
  \end{center}
  \caption{Transaction Rate, Single host, $s = 1$}
  \label{fig:transaction-rate-single-host-1}
+\end{figure}
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{response-time-single-host-1.png}
+ \end{center}
+ \caption{Average Response Time, Single host, $s = 1$}
+ \label{fig:response-time-single-host-1}
 \end{figure}
 \begin{figure}
  \begin{center}
