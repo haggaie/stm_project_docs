@@ -47,7 +47,23 @@
 \maketitle
 
 \begin{abstract}
-This is the text of the abstract.
+Apache is a large-scale industrial multi-process and multi-threaded
+application, which uses lock-based synchronization. We report on our
+experience in modifying Apache to employ transactional memory instead of
+locks, a process we refer to as \emph{transactification}; we are not
+aware of any previous efforts to transactify legacy software of such
+a large scale. Along the way, we learned some valuable lessons about
+which tools one should use, which parts of the code one should
+transactify and which are better left untouched, as well as on the
+intricacy of commit blocks. We also stumbled across weaknesses of
+existing software transactional memory (STM) toolkits, leading us
+to identify desirable features they are currently lacking.
+Finally, we present performance results from running
+Apache on a 32-core machine, showing that, surprisingly, the performance
+of the STM-based version is close to that of the lock-based version.
+These results suggest that there are applications for which the overhead
+of using a software-only implementation of transactional memory
+is insignificant.
 \end{abstract}
 
 \category{CR-number}{subcategory}{third-level}
