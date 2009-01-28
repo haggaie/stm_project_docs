@@ -1,16 +1,15 @@
 %-----------------------------------------------------------------------------
 %
-%               Template for LaTeX Class/Style File
+%               STM paper for SYSTOR'09
+%               based on: Template for LaTeX Class/Style File
 %
-% Name:         sigplanconf-template.tex
-% Purpose:      A template for sigplanconf.cls, which is a LaTeX 2e class
-%               file for SIGPLAN conference proceedings.
-%
-% Author:       Paul C. Anagnostopoulos
+% Template's Author: 
+%               Paul C. Anagnostopoulos
 %               Windfall Software
 %               978 371-2316
 %               paul@windfall.com
 %
+% Used:         31 January 2009
 % Created:      15 February 2005
 %
 %-----------------------------------------------------------------------------
@@ -270,7 +269,7 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
   ...
 }
 \end{lstlisting}
-\caption{Original {\tt open\_enitity} function.}
+\caption{Original {\tt open\_entity} function.}
 \label{code:original-open-entity}
 \end{figure*}
 
@@ -309,7 +308,7 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key)
   ...
 }
 \end{lstlisting}
-\caption{Transactified {\tt open\_enitity} function.}
+\caption{Transactified {\tt open\_entity} function.}
 \label{code:transactified-open-entity}
 \end{figure*}
 
@@ -346,6 +345,42 @@ defines a new commit handler right where it is being registered, however this
 requires the language to support closures, and of course there are many problems
 implementing those in a statically-typed language without garbage collection
 such as C.
+
+\begin{figure*}
+\begin{lstlisting}
+static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
+  ...
+  __tm_atomic {
+    obj = (cache_object_t *) cache_find(sconf->cache_cache, key);
+    if (obj) {
+      if (obj->complete) {
+        request_rec *rmain=r, *rtmp;
+        ++obj->refcount;
+        /* cache is worried about overall counts, not 'open' ones */
+        cache_update(sconf->cache_cache, obj);
+
+        /* If this is a subrequest, register the cleanup against the main request.
+         * This will prevent the cache object from being cleaned up from under the
+         * request after the subrequest is destroyed. */
+        rtmp = r;
+        while (rtmp) {
+          rmain = rtmp;
+          rtmp = rmain->main;
+        }
+        on_commit {
+          apr_pool_cleanup_register(rmain->pool, obj, decrement_refcount, 
+            apr_pool_cleanup_null);
+        }
+      }
+      else obj = NULL;
+    }
+  }
+  ...
+}
+\end{lstlisting}
+\caption{{\tt open\_entity} function with a commit handler closure}
+\label{code:closure-open-entity}
+\end{figure*}
 
 \subsection{Statistics and Profiling}
 Intel's STM manager collects statistics about the transactions being run, their
@@ -392,6 +427,13 @@ experiments comparing the results of an Apache server running without a cache, a
 cached version without our transactional modifications, and the transactified
 version. 
 
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{transaction-rate-single-host-1.png}
+ \end{center}
+ \caption{Transaction Rate, Single host, $s = 1$}
+ \label{fig:transaction-rate-single-host-1}
+\end{figure}
 \begin{figure}
  \begin{center}
   %\includegraphics[width=8cm]{Apache-Worker-MPM.png}
