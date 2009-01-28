@@ -20,8 +20,11 @@
 
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{listings}
 
 \begin{document}
+
+\lstset{language=C}
 
 \conferenceinfo{WXYZ '05}{date, City.} 
 \copyrightyear{2005} 
@@ -73,7 +76,7 @@ dispatches them to the available workers.
   \includegraphics[width=8cm]{Apache-Worker-MPM.png}
  \end{center}
  \caption{Apache worker MPM architecture}
- \label{apache-worker-MPM}
+ \label{fig:apache-worker-MPM}
 \end{figure}
 
 There are not many points of interaction between the worker threads themselves,
@@ -114,7 +117,7 @@ called from this function.
 In contrast, compiler-based STM use a specialized compiler, which has extended
 syntax for transactional memory atomic blocks. The compiler can then
 automatically convert memory accesses inside transactions into calls to the
-underlying library, a process sometimes referred as \emph{transactifycation}. 
+underlying library, a process sometimes referred as \emph{transactification}. 
 
 \subsubsection{Tanger}
 The Tanger\cite{felber2007tanger} transctifying compiler is an open-source academic
@@ -151,7 +154,7 @@ transactions can be marked as {\tt tm\_callable} and be transactified.
 
 Although ICC uses a proprietery STM manager, Intel has published their
 ABI\cite{icc:abi} allowing for other STM managers to replace their own. This feature
-and its selective transactifycation ability were the main reasons why we
+and its selective transactification ability were the main reasons why we
 preferred ICC.
 
 An extension to the Gnu Compiler Collection (GCC) is being developed\cite{gcctm} to
@@ -191,9 +194,136 @@ from the atomic section, and execute them after the transaction had committed.
 Although this requires some changes to the code, the changes are limited to the
 call-site, and need not modify any of the called libraries.
 
-[TBD: add the section from lyx about commit handlers. add code of an example of
-this need.] [TBD: discuss other benefits of commit handlers, and mention the
-fact that Intel added them.] 
+For example, the following critical section in the {\tt open\_entity} function
+(Figure ~\ref{code:original-open-entity}) is responsible for retrieving a page
+to fullfill a request from the server. It will increment the reference count on
+the cached page, and register a decrement function to be invoked upon completing
+the request. When we converted the critical section into a transaction, we
+didn't want the function {\tt apr\_pool\_cleanup\_register} to be called from
+inside the transaction, as transactifying it would require working an another
+library, the Apache Portable Runtime library, thus breaking encapsulation.
+
+The semantics of requests and subrequest in apache guranteed the request
+couldn't be completed before the return of this function, therefore we could
+move the registration of the cleanup function out of the atomic section, as seen
+in Figure ~\ref{code:transactified-open-entity}. However, having a commit
+handler construct in the language would make such conversions easier, with it we
+could register a commit handler from within the transaction, and have the STM
+system automatically invoke it once the transaction had committed.
+
+\begin{figure}
+\begin{lstlisting}
+static int open_entity(cache_handle_t *h, 
+    request_rec *r, const char *key)
+{
+  ...
+  if (sconf->lock) 
+    apr_thread_mutex_lock(sconf->lock);
+
+  obj = (cache_object_t *) 
+    cache_find(sconf->cache_cache, key);
+  if (obj) {
+    if (obj->complete) {
+      request_rec *rmain=r, *rtmp;
+      apr_atomic_inc32(&obj->refcount);
+      /* cache is worried about overall
+       * counts, not 'open' ones */
+      cache_update(sconf->cache_cache, obj);
+
+      /* If this is a subrequest,
+       * register the cleanup against
+       * the main request. This will
+       * prevent the cache object from
+       * being cleaned up from under the
+       * request after the subrequest is
+       * destroyed.
+       */
+      rtmp = r;
+      while (rtmp) {
+        rmain = rtmp;
+        rtmp = rmain->main;
+      }
+      apr_pool_cleanup_register(
+        rmain->pool, 
+        obj, decrement_refcount,
+        apr_pool_cleanup_null);
+    }
+    else obj = NULL;
+  }
+
+  if (sconf->lock) 
+    apr_thread_mutex_unlock(sconf->lock);
+  ...
+}
+\end{lstlisting}
+\caption{Original {\tt open\_enitity} function.}
+\label{code:original-open-entity}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}
+static int open_entity(cache_handle_t *h, 
+  request_rec *r, const char *key)
+{
+  ...
+  __tm_atomic {
+    obj = (cache_object_t *) 
+      cache_find(sconf->cache_cache, 
+        key);
+    if (obj) {
+      if (obj->complete) {
+        ++obj->refcount;
+        /* cache is worried about
+         * overall counts, not 'open'
+         * ones */
+        cache_update(sconf->cache_cache, 
+          obj);
+
+      }
+      else obj = NULL;
+    }
+  }
+
+  /* Register the object for removal
+   * from the cache after cleanup */
+  if (obj && obj->complete) {
+    request_rec *rmain=r, *rtmp;
+    /* If this is a subrequest, register
+     * the cleanup against the main
+     * request. This will prevent the
+     * cache object from being cleaned
+     * up from under the request after
+     * the subrequest is destroyed.
+     */
+    rtmp = r;
+    while (rtmp) {
+      rmain = rtmp;
+      rtmp = rmain->main;
+    }
+    apr_pool_cleanup_register(
+      rmain->pool, 
+      obj, decrement_refcount,
+      apr_pool_cleanup_null);
+  }
+  ...
+}
+\end{lstlisting}
+\caption{Transactified {\tt open\_enitity} function.}
+\label{code:transactified-open-entity}
+\end{figure}
+
+This mechanism, along with abort and violation handlers, was suggested in
+~\cite{tm:commit-handlers}.  Commit handlers are described there as a mechanism
+that allows finalization of tasks, for instance, a transactional system call
+such as write to file might have its permanent side effects be executed in a
+commit handler. Abort and violation handlers are user functions that are called
+when a transaction is aborted by the user, or becase of a conflict,
+respectively. They allow transactions with permanent but reversible side-effects
+to undo their effects.  
+
+In the latest version of Intel STM Compiler, support for abort and commit
+handlers was in fact added to the system, by registering a callback function
+from inside a transaction.
 
 \section{Evaluation} 
 \subsection{Methodology} 
@@ -238,42 +368,42 @@ version.
   %\includegraphics[width=8cm]{Apache-Worker-MPM.png}
  \end{center}
  \caption{Average Response Time, $s = 1$}
- \label{response-time-1}
+ \label{fig:response-time-1}
 \end{figure}
 \begin{figure}
  \begin{center}
   %\includegraphics[width=8cm]{Apache-Worker-MPM.png}
  \end{center}
  \caption{Average Response Time, $s = 2$}
- \label{response-time-2}
+ \label{fig:response-time-2}
 \end{figure}
 \begin{figure}
  \begin{center}
   %\includegraphics[width=8cm]{Apache-Worker-MPM.png}
  \end{center}
  \caption{Transaction Rate, $s = 1$}
- \label{transaction-rate-1}
+ \label{fig:transaction-rate-1}
 \end{figure}
 \begin{figure}
  \begin{center}
   %\includegraphics[width=8cm]{Apache-Worker-MPM.png}
  \end{center}
  \caption{Transaction Rate, $s = 2$}
- \label{transaction-rate-2}
+ \label{fig:transaction-rate-2}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{transaction-rate-single-process.png}
  \end{center}
  \caption{Transaction Rate, $s = 1$, a single process}
- \label{one-process-transaction-rate}
+ \label{fig:one-process-transaction-rate}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{abort-rate.png}
  \end{center}
  \caption{Abort Rate, $s = 1$, a single process}
- \label{abort-rate}
+ \label{fig:abort-rate}
 \end{figure}
 
 \section{Conclusions}
