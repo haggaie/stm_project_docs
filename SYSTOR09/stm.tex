@@ -17,6 +17,7 @@
 
 
 \documentclass[preprint,natbib,11pt]{sigplanconf}
+% \documentclass[natbib,11pt]{sigplanconf}
 
 \usepackage{amsmath}
 \usepackage{graphicx}
@@ -26,22 +27,22 @@
 
 \lstset{language=C}
 
-\conferenceinfo{WXYZ '05}{date, City.} 
-\copyrightyear{2005} 
+\conferenceinfo{SYSTOR '09}{4-6 May 2009, Haifa, Israel.} 
+\copyrightyear{2009} 
 \copyrightdata{[to be supplied]} 
 
-\titlebanner{banner above paper title}        % These are ignored unless
-\preprintfooter{short description of paper}   % 'preprint' option specified.
+\titlebanner{DRAFT - Do not distribute}        % These are ignored unless
+\preprintfooter{STM Paper for SYSTOR}          % 'preprint' option specified.
 
-\title{Title Text}
-\subtitle{Subtitle Text, if any}
+\title{Transactifying Apache}
+% \subtitle{Subtitle Text, if any}
 
-\authorinfo{Name1}
-           {Affiliation1}
-           {Email1}
-\authorinfo{Name2\and Name3}
-           {Affiliation2/3}
-           {Email2/3}
+\authorinfo{Haggai Eran\and Ohad Lutzky\and Zvika Guz\and Idit Keidar}
+           {Technion}
+           {haggaie@tx.technion.ac.il\and lutzky@gmail.com\and zguz@tx.technion.ac.il\and idish@ee.technion.ac.il}
+%\authorinfo{Name2\and Name3}
+%           {Affiliation2/3}
+%           {Email2/3}
 
 \maketitle
 
@@ -61,21 +62,23 @@ keyword1, keyword2
 
 The text of the paper begins here.
 \section{Related Work}
-\section{Transactifying Apache}
-Apache\cite{apache} HTTP server is a popular web server application written in C. It
-supports working on multiprocessor machines with several multi-processing
+\section{Background: Software and Tools}
+\subsection{Apache}
+Apache\cite{apache} HTTP server is a popular web server application written in
+C. It supports working on multiprocessor machines with several multi-processing
 modules (MPMs) each offering a different strategy for handling requests and
-distributing the work. The most popular threaded MPM is the worker MPM, which
-works by running multiple worker-threads under several processes, each thread
-handles a single request at a time. In each such process there are several
-worker threads, and also a listener thread that fetches incoming requests and
-dispatches them to the available workers.
+distributing the work. The most popular threaded MPM is the \emph{worker} MPM,
+which works by running multiple worker-threads under several processes, each
+thread handles a single request at a time. In each such process there are
+several worker threads, and also a listener thread that fetches incoming
+requests and dispatches them to the available workers, as illustrated in Figure
+~\ref{fig:apache-worker-MPM}.
 
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{Apache-Worker-MPM.png}
  \end{center}
- \caption{Apache worker MPM architecture}
+ \caption{Apache worker MPM architecture.}
  \label{fig:apache-worker-MPM}
 \end{figure}
 
@@ -119,30 +122,17 @@ syntax for transactional memory atomic blocks. The compiler can then
 automatically convert memory accesses inside transactions into calls to the
 underlying library, a process sometimes referred as \emph{transactification}. 
 
-\subsubsection{Tanger}
-The Tanger\cite{felber2007tanger} transctifying compiler is an open-source academic
-compiler extension for LLVM\cite{LLVM:CGO04}, an extensible compiler framework.
-Tanger aims at creating a transactifying compiler that is independant of the STM
-system used. It works with the tinySTM\cite{felber2008tinystm} library, but can
-easily be extended to use other STM libraries by writing a simple plugin.
+\subsubsection{\sc Tanger}
+The {\sc Tanger} ~\cite{felber2007tanger} transctifying compiler is an
+open-source academic compiler extension for LLVM ~\cite{LLVM:CGO04}, an
+extensible compiler framework.  Tanger aims at creating a transactifying
+compiler that is independant of the STM system used. It works with the tinySTM
+~\cite{felber2008tinystm} library, but can easily be extended to use other STM
+libraries by writing a simple plugin.
 
-Tanger created a transactified version of each function in a compilation unit.
-Every function call inside a transaction was then converted to a call to the new
-version. This method is a major disadvantage when working on a large
-application. Many functions do not need a transactified version and this causes
-uneeded work for the compiler and the linker. Moreover, sometimes the
-transactifyication might fail because of calls to functions whose source is not
-available and cannot be transactified. This can cause the entire build process
-to fail, where in fact the code can be transactified without any error.
-
-Although tanger is accompanied with the Tarifa tool, which transactifies
-compiled binaries, and might have been a workaround for our problems, using it
-seemed an unnecessary complication.
-
-This was the main reason why we eventually switched to Intel's STM Compiler.
-Lately a new release of tanger was announced, one in which the developer can
-annotate which functions should be transactified, however we didn't get a chance
-to try it.
+{\sc Tanger} is accompanied with the {\sc Tarifa} ~\cite{felber2007tanger}
+tool, which transactifies compiled binaries, even without the sources, which
+might be a very important advantage when modifying legacy code.
 
 \subsubsection{Intel STM Compiler}
 Intel has published\cite{icc} an experimental STM compiler based on their industrial
@@ -157,21 +147,42 @@ ABI\cite{icc:abi} allowing for other STM managers to replace their own. This fea
 and its selective transactification ability were the main reasons why we
 preferred ICC.
 
+In the latest version of Intel STM Compiler, support for abort and commit
+handlers was in fact added to the system, by registering a callback function
+from inside a transaction.
+
 An extension to the Gnu Compiler Collection (GCC) is being developed\cite{gcctm} to
 enable transactional memory support for GCC. It is intended to work with
 tinySTM, but being open source, other STM systems will probably be ported too.
 The syntax of the C/C++ language extensions is designed to be compatible with
-ICC. This means that our work will probably be compilable under GCC with this
-extension, without much modification.
+ICC. This means that applications converted for ICC will probably be compilable
+under GCC with this extension, without much modification.
 
-\subsection{Transactifycation Process} 
+\section{Transactifycation} 
+\subsection{Which STM to use?}
+{\sc Tanger} created a transactified version of each function in a compilation
+unit.  Every function call inside a transaction was then converted to a call to
+the new version. This method is a major disadvantage when working on a large
+application. Many functions do not need a transactified version and this causes
+uneeded work for the compiler and the linker. Moreover, sometimes the
+transactifyication might fail because of calls to functions whose source is not
+available and cannot be transactified. This can cause the entire build process
+to fail, where in fact the code can be transactified without any error.
+
+This was the main reason why we eventually chose to use Intel's STM Compiler.
+Lately a new release of tanger was announced, one in which the developer can
+annotate which functions should be transactified, however we didn't get a
+chance to try it.
+
+\subsection{What to transactify}
 The conversion process included
-converting critical sections protected by the cache module's lock into atomic
-blocks, and decorating required functions as {\tt tm\_callable}. The module had
-used atomic instructions for some memory accesses, and these were converted to
-full transactions in atomic blocks, so that collisions with these accesses will
-be detected.
+converting critical sections protected by the cache module's main lock into
+atomic blocks, and decorating required functions as {\tt tm\_callable}. The
+module had used atomic instructions for some memory accesses, and these were
+converted to full transactions in atomic blocks, so that collisions with these
+accesses will be detected.
 
+\subsection{Defining atomic blocks}
 Some transactions, after conversion contained code that belonged with the
 transactions, but didn't need neccessarily to run atomically with the
 transaction. An example might be a transaction removing an object from the
@@ -211,98 +222,72 @@ handler construct in the language would make such conversions easier, with it we
 could register a commit handler from within the transaction, and have the STM
 system automatically invoke it once the transaction had committed.
 
-\begin{figure}
+\begin{figure*}
 \begin{lstlisting}
-static int open_entity(cache_handle_t *h, 
-    request_rec *r, const char *key)
-{
+static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
   ...
-  if (sconf->lock) 
-    apr_thread_mutex_lock(sconf->lock);
+  if (sconf->lock) apr_thread_mutex_lock(sconf->lock);
 
-  obj = (cache_object_t *) 
-    cache_find(sconf->cache_cache, key);
+  obj = (cache_object_t *) cache_find(sconf->cache_cache, key);
   if (obj) {
     if (obj->complete) {
       request_rec *rmain=r, *rtmp;
       apr_atomic_inc32(&obj->refcount);
-      /* cache is worried about overall
-       * counts, not 'open' ones */
+      /* cache is worried about overall counts, not 'open' ones */
       cache_update(sconf->cache_cache, obj);
 
-      /* If this is a subrequest,
-       * register the cleanup against
-       * the main request. This will
-       * prevent the cache object from
-       * being cleaned up from under the
-       * request after the subrequest is
-       * destroyed.
-       */
+      /* If this is a subrequest, register the cleanup against the main request.
+       * This will prevent the cache object from being cleaned up from under the
+       * request after the subrequest is destroyed. */
       rtmp = r;
       while (rtmp) {
         rmain = rtmp;
         rtmp = rmain->main;
       }
-      apr_pool_cleanup_register(
-        rmain->pool, 
-        obj, decrement_refcount,
+      apr_pool_cleanup_register(rmain->pool, obj, decrement_refcount, 
         apr_pool_cleanup_null);
     }
     else obj = NULL;
   }
 
-  if (sconf->lock) 
-    apr_thread_mutex_unlock(sconf->lock);
+  if (sconf->lock) apr_thread_mutex_unlock(sconf->lock);
   ...
 }
 \end{lstlisting}
 \caption{Original {\tt open\_enitity} function.}
 \label{code:original-open-entity}
-\end{figure}
+\end{figure*}
 
-\begin{figure}
+\begin{figure*}
 \begin{lstlisting}
-static int open_entity(cache_handle_t *h, 
-  request_rec *r, const char *key)
+static int open_entity(cache_handle_t *h, request_rec *r, const char *key)
 {
   ...
   __tm_atomic {
-    obj = (cache_object_t *) 
-      cache_find(sconf->cache_cache, 
-        key);
+    obj = (cache_object_t *) cache_find(sconf->cache_cache, key);
     if (obj) {
       if (obj->complete) {
         ++obj->refcount;
-        /* cache is worried about
-         * overall counts, not 'open'
-         * ones */
-        cache_update(sconf->cache_cache, 
-          obj);
-
+        /* cache is worried about overall counts, not 'open' ones */
+        cache_update(sconf->cache_cache, obj);
       }
       else obj = NULL;
     }
   }
 
-  /* Register the object for removal
-   * from the cache after cleanup */
+  /* Register the object for removal from the cache after cleanup */
   if (obj && obj->complete) {
     request_rec *rmain=r, *rtmp;
-    /* If this is a subrequest, register
-     * the cleanup against the main
-     * request. This will prevent the
-     * cache object from being cleaned
-     * up from under the request after
-     * the subrequest is destroyed.
+    /* If this is a subrequest, register the cleanup against the main request.
+     * This will prevent the cache object from being cleaned up from under the
+     * request after the subrequest is destroyed.
      */
     rtmp = r;
     while (rtmp) {
       rmain = rtmp;
       rtmp = rmain->main;
     }
-    apr_pool_cleanup_register(
-      rmain->pool, 
-      obj, decrement_refcount,
+    apr_pool_cleanup_register(rmain->pool, obj, decrement_refcount, 
       apr_pool_cleanup_null);
   }
   ...
@@ -310,29 +295,57 @@ static int open_entity(cache_handle_t *h,
 \end{lstlisting}
 \caption{Transactified {\tt open\_enitity} function.}
 \label{code:transactified-open-entity}
-\end{figure}
+\end{figure*}
 
-This mechanism, along with abort and violation handlers, was suggested in
-~\cite{tm:commit-handlers}.  Commit handlers are described there as a mechanism
-that allows finalization of tasks, for instance, a transactional system call
-such as write to file might have its permanent side effects be executed in a
-commit handler. Abort and violation handlers are user functions that are called
-when a transaction is aborted by the user, or becase of a conflict,
-respectively. They allow transactions with permanent but reversible side-effects
-to undo their effects.  
+\subsection{Commit Handlers}
+Commit and undo handlers are pieces of code that are scheduled by a transaction
+to run when the transaction will commit, or abort, respectively. This mechanism,
+was suggested in ~\cite{tm:commit-handlers}.  Commit handlers are described
+there as a mechanism that allows finalization of tasks, for instance, a
+transactional system call such as write to file might have its permanent side
+effects be executed in a commit handler. 
+Abort handlers are called when a transaction is aborted and can reverse the 
+side-effects of a transaction. These handlers can sometimes be used to implement
+more efficient transactions. For example, if allocating memory inside a
+transaction, (assuming without a specialized memory allocator which is available
+in many STMs), the STM would need to log all the memory accesses to the memory
+management data structures, and undo these writes in case of an abort. A more
+efficient solution could be allocating the memory immediately, and in case of an
+abort just free the memory in an abort handler.
 
-In the latest version of Intel STM Compiler, support for abort and commit
-handlers was in fact added to the system, by registering a callback function
-from inside a transaction.
+From our perspective, commit handlers could have been used to make the
+modifications we wanted in the atomic blocks, and move finalization functions
+out of atomic blocks just by registering them as commit handlers. In the given
+example, the call to {\tt apr\_pool\_cleanup\_register} could have been
+converted into a call registering this function as a commit handler.
+
+\section{Wish List}
+\subsection{Handler Closures}
+While commit handlers can aid a lot in the process of transactifying a legacy
+application, their current syntax in Intel STM Compiler is very limiting.
+Handlers must be given as a pointer to function of a specific signature, so a
+developer trying to move a piece of code out of an atomic block, would still
+need to write a new function. It would be nice to have a language construct that
+defines a new commit handler right where it is being registered, however this
+requires the language to support closures, and of course there are many problems
+implementing those in a statically-typed language without garbage collection
+such as C.
+
+\subsection{Statistics and Profiling}
+Intel's STM manager collects statistics about the transactions being run, their
+size, abort rates, etc. Unfortunately however, it cannot work with a
+multiprocess application such as Apache. This limits the ability to investigate
+the performance of converted applications to only limited runs with only one
+process, or having only black box measurements of the system.
 
 \section{Evaluation} 
 \subsection{Methodology} 
-The transactified web server was evaluated using \emph{Siege}\cite{siege}, an HTTP
-load testing tool. The server was loaded with the set of UNIX man-pages - a set
-of small textual files typical of some web sites. Each page was served using the
-\emph{man2html}\cite{man2html} program, uncompressed and converted into HTML, to make
-sure the serving of files requires enough computational resources to make the
-use of cache worthwhile.
+The transactified web server was evaluated using \emph{Siege}\cite{siege}, an
+HTTP load testing tool. The server was loaded with the set of UNIX man-pages - a
+set of small textual files typical of some web sites. Each page was served using
+the \emph{man2html}\cite{man2html} program, uncompressed and converted into
+HTML, to make sure the serving of files requires enough computational resources
+to make the use of cache worthwhile.
 
 The man2html program is a Common Gateway Interface (CGI) program that serves
 unix manual (man) pages on internet sites. The pages are usually stores
