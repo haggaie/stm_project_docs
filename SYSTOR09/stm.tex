@@ -109,18 +109,19 @@ We sought to learn how painful such a process can be, and what can be done in or
 facilitate it.
 
 The rest of the paper is organized as follows: After a brief review of the apache application 
-and the STM tools used in our work (Section 3), we describe in details the transactification 
-process, including the hurdles we have encountered and the means used to overcome them. We 
-then study (in Section 4) the performance of the transactified version, showing that the 
-Transactified version is competitive to the legacy code in performance. This demonstrates that 
-for some applications, the performance penalty of STM may not be as severe as usually assumed, 
-and will hence justify the porting to TM with all the benefits it endures. Finally, we 
-summarizes (in Section 5) the lesson learned in the transactification process, including 
-our wish-list for future STM versions.
+and the STM tools used in our work (Section ~\ref{sec:background}), we describe in details the
+transactification process, including the hurdles we have encountered and the means used to overcome
+them (Section ~\ref{sec:transactification}). We then study (in Section ~\ref{sec:evaluation}) the
+performance of the transactified version, showing that the Transactified version is competitive to
+the legacy code in performance. This demonstrates that for some applications, the performance
+penalty of STM may not be as severe as usually assumed, and will hence justify the porting to TM
+with all the benefits it endures. Finally, we summarizes (in Section ~\ref{sec:conclusions}) the
+lesson learned in the transactification process, including our wish-list (Section
+~\ref{sec:wishlist}) for future STM versions.
 
 
 \section{Related Work}
-\section{Background: Software and Tools}
+\section{Background: Software and Tools}\label{sec:background}
 \subsection{Apache}
 Apache ~\cite{apache} HTTP server is a popular web server application written in
 C. It supports working on multiprocessor machines with several multi-processing
@@ -216,7 +217,7 @@ The syntax of the C/C++ language extensions is designed to be compatible with
 ICC. This means that applications converted for ICC will probably be compilable
 under GCC with this extension, without much modification.
 
-\section{Transactifycation} 
+\section{Transactification}\label{sec:transactification}
 \subsection{Which STM to use?}
 {\sc Tanger} created a transactified version of each function in a compilation
 unit.  Every function call inside a transaction was then converted to a call to
@@ -377,7 +378,7 @@ out of atomic blocks just by registering them as commit handlers. In the given
 example, the call to {\tt apr\_pool\_cleanup\_register} could have been
 converted into a call registering this function as a commit handler.
 
-\section{Wish List}
+\section{Wish List}\label{sec:wishlist}
 \subsection{Handler Closures}
 While commit handlers can aid a lot in the process of transactifying a legacy
 application, their current syntax in Intel STM Compiler is very limiting.
@@ -432,7 +433,7 @@ multiprocess application such as Apache. This limits the ability to investigate
 the performance of converted applications to only limited runs with only one
 process, or having only black box measurements of the system.
 
-\section{Evaluation} 
+\section{Evaluation}\label{sec:evaluation}
 \subsection{Methodology} 
 The transactified web server was evaluated using \emph{Siege} ~\cite{siege}, an
 HTTP load testing tool. The server was loaded with the set of UNIX man-pages - a
@@ -551,7 +552,7 @@ version.
  \label{fig:abort-rate}
 \end{figure}
 
-\section{Conclusions}
+\section{Conclusions}\label{sec:conclusions}
 \begin{itemize}
   \item Out of 340,000 lines of code in the Apache Web server, the cache module
 is comprised of only 6651 lines of code, of which only 273 lines were changed by
