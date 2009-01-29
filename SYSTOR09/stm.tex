@@ -431,70 +431,80 @@ version.
  \begin{center}
   \includegraphics[width=8cm]{transaction-rate-single-host-1.png}
  \end{center}
- \caption{Transaction Rate, Single host, $s = 1$}
+ \caption{Transaction Rate, Single host, $s = 1$: Medium locality.
+          With a single host, the additional latency of the network is
+          eliminated, achieving generally higher results than with two hosts. }
  \label{fig:transaction-rate-single-host-1}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{response-time-single-host-1.png}
  \end{center}
- \caption{Average Response Time, Single host, $s = 1$}
+ \caption{Average Response Time, Single host, $s = 1$: Medium locality}
  \label{fig:response-time-single-host-1}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{response-time-client-server-0dot1.png}
  \end{center}
- \caption{Average Response Time, $s = 0.1$}
+ \caption{Average Response Time, $s = 0.1$: Low locality}
  \label{fig:response-time-0.1}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{response-time-client-server-1.png}
  \end{center}
- \caption{Average Response Time, $s = 1$}
+ \caption{Average Response Time, $s = 1$: Medium locality}
  \label{fig:response-time-1}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{response-time-client-server-2.png}
  \end{center}
- \caption{Average Response Time, $s = 2$}
+ \caption{Average Response Time, $s = 2$: High locality}
  \label{fig:response-time-2}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{transaction-rate-client-server-0dot1.png}
  \end{center}
- \caption{Transaction Rate, $s = 0.1$}
+ \caption{Transaction Rate, $s = 0.1$: Low locality.
+          The penalty of STM increases to the point it outweights the benefit of
+          using the cache.} 
  \label{fig:transaction-rate-0.1}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{transaction-rate-client-server-1.png}
  \end{center}
- \caption{Transaction Rate, $s = 1$}
+ \caption{Transaction Rate, $s = 1$: Medium locality.
+          The panelty of STM remains but the cache is an improvement.}
  \label{fig:transaction-rate-1}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{transaction-rate-client-server-2.png}
  \end{center}
- \caption{Transaction Rate, $s = 2$}
+ \caption{Transaction Rate, $s = 2$: High locality.}
  \label{fig:transaction-rate-2}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{transaction-rate-single-process.png}
  \end{center}
- \caption{Transaction Rate, $s = 1$, a single process}
+ \caption{Transaction Rate, $s = 1$: Medium locality, a single process.
+          Without the additional processes apache fails to scale with high
+          number of cores. STM suffers a decrease in performance but is
+          comparable.} 
  \label{fig:one-process-transaction-rate}
 \end{figure}
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{abort-rate.png}
  \end{center}
- \caption{Abort Rate, $s = 1$, a single process}
+ \caption{Abort Rate, $s = 1$: Medium locality, a single process.
+          The abort rate increase with the number of cores might explain the 
+          decrease in transaction rate.}
  \label{fig:abort-rate}
 \end{figure}
 
