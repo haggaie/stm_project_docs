@@ -443,28 +443,42 @@ version.
 \end{figure}
 \begin{figure}
  \begin{center}
-  %\includegraphics[width=8cm]{Apache-Worker-MPM.png}
+  \includegraphics[width=8cm]{response-time-client-server-0dot1.png}
+ \end{center}
+ \caption{Average Response Time, $s = 0.1$}
+ \label{fig:response-time-0.1}
+\end{figure}
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{response-time-client-server-1.png}
  \end{center}
  \caption{Average Response Time, $s = 1$}
  \label{fig:response-time-1}
 \end{figure}
 \begin{figure}
  \begin{center}
-  %\includegraphics[width=8cm]{Apache-Worker-MPM.png}
+  \includegraphics[width=8cm]{response-time-client-server-2.png}
  \end{center}
  \caption{Average Response Time, $s = 2$}
  \label{fig:response-time-2}
 \end{figure}
 \begin{figure}
  \begin{center}
-  %\includegraphics[width=8cm]{Apache-Worker-MPM.png}
+  \includegraphics[width=8cm]{transaction-rate-client-server-0dot1.png}
+ \end{center}
+ \caption{Transaction Rate, $s = 0.1$}
+ \label{fig:transaction-rate-0.1}
+\end{figure}
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{transaction-rate-client-server-1.png}
  \end{center}
  \caption{Transaction Rate, $s = 1$}
  \label{fig:transaction-rate-1}
 \end{figure}
 \begin{figure}
  \begin{center}
-  %\includegraphics[width=8cm]{Apache-Worker-MPM.png}
+  \includegraphics[width=8cm]{transaction-rate-client-server-2.png}
  \end{center}
  \caption{Transaction Rate, $s = 2$}
  \label{fig:transaction-rate-2}
@@ -486,22 +500,35 @@ version.
 
 \section{Conclusions}
 \begin{itemize}
-  \item Out of 340,000 lines of code in the Apache Web server, the cache module is comprised of only 6651 lines of code, of which only 273 lines were changed by our modifications. This shows the importance of being able to modify only encapsulated sections of the code, and interoperating with legacy code that still uses locks.  
-  \item Having commit handlers in the STM system is not only needed for creating efficient open transactions, but can also aid the process of transactifying legacy code.
-  \item There is great importance in working on real-world applications as they may reveal challenges resulting from engineering problems and not only algorithmic and theoretical problems.
+  \item Out of 340,000 lines of code in the Apache Web server, the cache module
+is comprised of only 6651 lines of code, of which only 273 lines were changed by
+our modifications. This shows the importance of being able to modify only
+encapsulated sections of the code, and interoperating with legacy code that
+still uses locks.  
+  \item Having commit handlers in the STM system is not only needed for creating
+efficient open transactions, but can also aid the process of transactifying
+legacy code.
+  \item There is great importance in working on real-world applications as they
+may reveal challenges resulting from engineering problems and not only
+algorithmic and theoretical problems.
 \end{itemize}
-There are many STM systems currently available, and one immediate direction would be to compare them using this benchmark. This would require writing plugins for any such system to match Intel's TM ABI. 
+There are many STM systems currently available, and one immediate direction
+would be to compare them using this benchmark. This would require writing
+plugins for any such system to match Intel's TM ABI. 
 
-In addition, there are other applications that might be interesting as transactional memory applications, following the methods we used.
+In addition, there are other applications that might be interesting as
+transactional memory applications, following the methods we used.
 
-\appendix
-\section{Appendix Title}
+%\appendix
+%\section{Appendix Title}
 
-This is the text of the appendix, if you need one.
+% This is the text of the appendix, if you need one.
 
 \acks
 
-Acknowledgments, if needed.
+We would like to thank Torvald Riegel from the Transacional Memory Research
+group at Dresden University of Technology, for helping us with our efforts to
+use {\sc Tanger} for our research.
 
 \bibliographystyle{plainnat}
 
