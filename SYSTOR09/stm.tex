@@ -37,7 +37,7 @@
 % \subtitle{Subtitle Text, if any}
 
 \authorinfo{Haggai Eran\and Ohad Lutzky\and Zvika Guz\and Idit Keidar}
-           {Technion}
+           {Technion - Israel Institute of Technology}
            {haggaie@tx.technion.ac.il\and lutzky@gmail.com\and zguz@tx.technion.ac.il\and idish@ee.technion.ac.il}
 %\authorinfo{Name2\and Name3}
 %           {Affiliation2/3}
@@ -74,8 +74,51 @@ term1, term2
 keyword1, keyword2
 
 \section{Introduction}
+The vast shift to multicore machines in the last couple of years indicates the 
+emerging of the multicore era. In this context, Transactional Memory and Software Transactional 
+Memory (STM) are of the primary tools targeted at allowing programmers to easily harness the 
+parallelism of future multi-core machines and to extract the performance promise these systems 
+endure. 
 
-The text of the paper begins here.
+One of the principal challenges all Transactional Memory system confront (beside 
+delivering performance) is the ability to handle large-scale commercial applications and the 
+ability to easily export  large legacy code. As TM systems are maturing, the aspect of 
+convertibility and completeness are becoming acute in order to allow TM to shift from concept 
+into full-fledged commercial tool. In this work we try via a design example to answer how 
+far from achieving the goal we are at. 
+
+To date, transactional memory was mostly employed within the niche of complex concurrent data 
+structures (such as red-black trees, skip list  [XX What more? Add citations XX]) and 
+isolated scientific algorithms (such as STAMP [citation]) . Moreover, it was mostly 
+used to implement benchmarks explicitly with transactional memory from scratch. In this paper, 
+we use transactional memory for the first time in the context of large-scale industrial 
+software, which, moreover, does not pertain to any of the typical niches of transactional 
+memory benchmarks. Furthermore, we convert legacy code, which used lock-based synchronization, 
+to work with transactional memory, rather than write the benchmark from scratch. We refer to 
+this conversion process as \emph{transactification}.
+
+Our goal for this exercise is twofold. First, we wanted to examine whether the transactional 
+memory paradigm is broadly applicable, outside its traditional niches, in contexts where a 
+high level of parallelism is already obtained using lock-based synchronization. [XX Can we 
+quote something somebody said before on where it should not work?? XX]. 
+
+Second, as transactional memory is being touted as the panacea for the limited parallelism 
+of coarse-grained locks, and since coarse-grained locks that limit parallelism are widely used 
+in legacy code, one can anticipate a growing need for transactification of legacy software. 
+We sought to learn how painful such a process can be, and what can be done in order to 
+facilitate it.
+
+The rest of the paper is organized as follows: After a brief review of the apache application 
+and the STM tools used in our work (Section 3), we describe in details the transactification 
+process, including the hurdles we have encountered and the means used to overcome them. We 
+then study (in Section 4) the performance of the transactified version, showing that the 
+Transactified version is competitive to the legacy code in performance. This demonstrates that 
+for some applications, the performance penalty of STM may not be as severe as usually assumed, 
+and will hence justify the porting to TM with all the benefits it endures. Finally, we 
+summarizes (in Section 5) the lesson learned in the transactification process, including 
+our wish-list for future STM versions.
+
+
 \section{Related Work}
 \section{Background: Software and Tools}
 \subsection{Apache}
