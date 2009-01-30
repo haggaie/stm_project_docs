@@ -287,17 +287,28 @@ under GCC with this extension, without much modification.
 
 \section{Transactification}\label{sec:transactification}
 \subsection{Which STM to use?}
-{\sc Tanger} created a transactified version of each function in a compilation
+
+On examining the Apache code, our first observation was that
+the vast majority of the code does not access any global variables,
+and therefore does not require transactification at all.
+Upon identifying the parts that do require atomicity,
+we wanted to only focus on them, without touching
+the rest of the code, in order to save work for the programmers
+as well as saving unnecessary work for the compiler and the linker.
+
+We first attempted to do this with {\sc Tanger}, albeit unsuccessfully.
+The version of {\sc Tanger} we used
+created a transactified version of each function in a compilation
 unit.  Every function call inside a transaction was then converted to a call to
-the new version. This method is a major disadvantage when working on a large
-application. Many functions do not need a transactified version and this causes
-uneeded work for the compiler and the linker. Moreover, sometimes the
+the new version. This creates a major disadvantage when working on a large
+application. Moreover, sometimes the
 transactifyication might fail because of calls to functions whose source is not
 available and cannot be transactified. This can cause the entire build process
-to fail, where in fact the code can be transactified without any error.
+to fail, where in fact the code could have be transactified without any error
+by skipping these functions.
 
-This drawback was the main reason why we eventually chose to use Intel's STM 
-Compiler. Lately, a new release of tanger was announced, one in which the developer 
+This drawback was the main reason why we eventually chose to use Intel's STM
+Compiler. Lately, a new release of {\sc Tanger} was announced, one in which the developer
 can annotate which functions should be transactified. However, we did not get a
 chance to try it.
 
