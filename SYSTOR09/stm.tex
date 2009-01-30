@@ -122,7 +122,7 @@ lesson learned in the transactification process, including our wish-list (Sectio
 
 \section{Related Work}
 \section{Background: Software and Tools}\label{sec:background}
-\subsection{Apache}
+\subsection{Apache}\label{sec:apache}
 Apache ~\cite{apache} HTTP server is a popular web server application written in
 C. It supports working on multiprocessor machines with several multi-processing
 modules (MPMs) each offering a different strategy for handling requests and
@@ -234,12 +234,18 @@ annotate which functions should be transactified, however we didn't get a
 chance to try it.
 
 \subsection{What to transactify}
-The conversion process included
-converting critical sections protected by the cache module's main lock into
-atomic blocks, and decorating required functions as {\tt tm\_callable}. The
-module had used atomic instructions for some memory accesses, and these were
-converted to full transactions in atomic blocks, so that collisions with these
-accesses will be detected.
+We have decided to focus our change in Apache with the memory cache module. As
+described in Section \ref{sec:apache}, it is a significant point of interaction
+between Apache's worker threads, and since it is implemented with a course-grained
+lock, it is ideal for converting into STM. Another advantage is that it is a
+well encapsulated module, allowing us to see how can we convert only a small
+part of a larger system.
+
+The conversion process included converting critical sections protected by the
+cache module's main lock into atomic blocks, and decorating required functions
+as {\tt tm\_callable}. The module had used atomic instructions for some memory
+accesses, and these were converted to full transactions in atomic blocks, so
+that collisions with these accesses will be detected.
 
 \subsection{Defining atomic blocks}
 Some transactions, after conversion contained code that belonged with the
