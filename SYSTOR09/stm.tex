@@ -327,8 +327,8 @@ accesses, and these were converted to full transactions in atomic blocks, so
 that collisions with these accesses will be detected.
 
 \subsection{Defining atomic blocks}
-Some transactions, after conversion contained code that belonged with the
-transactions, but did not need necessarily to run atomically with the
+Following the conversion, some transactions contained code that pertained to
+the transaction, but did not necessarily need to run atomically with the
 transaction. An example might be a transaction removing an object from the
 cache, and freeing its memory. While the removal operation must be protected
 inside a transaction as it is using the shared memory structure of the cache,
