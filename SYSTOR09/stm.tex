@@ -222,7 +222,7 @@ The {\tt mod\_mem\_cache} module implements a memory cache using a shared hash
 table and priority queue. The key to the hash table is the URL of the request,
 converted into a canonical form. The cache is limited both by size and by the
 number of elements, and by memory size, so on insertion, sometimes lower
-priority entries are removed from the cache. The priority is deterimined by one
+priority entries are removed from the cache. The priority is determined by one
 of two algorithms: LRU, removing the least recently used entries first, and GDSF
 (Greedy Dual Size Frequency) assigning score to entries based on the cost of a
 cache miss, and the entry size.
@@ -248,11 +248,11 @@ sometimes refer to this process. We experimented with two compiler-based
 STMs, which we now describe. 
 
 \subsubsection{\sc Tanger}
-The {\sc Tanger}~\cite{felber2007tanger} transctifying compiler is an
+The {\sc Tanger}~\cite{felber2007tanger} transactifying compiler is an
 open-source academic compiler extension for LLVM~\cite{LLVM:CGO04}, an
 extensible compiler framework.  Tanger aims at creating a transactifying
-compiler that is independant of the STM system used. It works with the
-tinySTM~\cite{felber2008tinystm} library, but can easily be extended to use
+compiler that is independent of the STM system used. It works with the
+TinySTM~\cite{felber2008tinystm} library, but can easily be extended to use
 other STM libraries by writing a simple plugin.
 
 {\sc Tanger} is accompanied with the {\sc Tarifa}~\cite{felber2007tanger}
@@ -269,7 +269,7 @@ The attribute {\tt tm\_callable} tells the compiler that a transactified version
 of the function will be needed. This way, only functions that are required inside
 transactions can be marked as {\tt tm\_callable} and be transactified.
 
-Although ICC uses a proprietery STM manager, Intel has published their
+Although ICC uses a proprietary STM manager, Intel has published their
 ABI~\cite{icc:abi} allowing for other STM managers to replace their own. This feature
 and its selective transactification ability were the main reasons why we
 preferred ICC.
@@ -302,9 +302,9 @@ created a transactified version of each function in a compilation
 unit.  Every function call inside a transaction was then converted to a call to
 the new version. This creates a major disadvantage when working on a large
 application. Moreover, sometimes the
-transactifyication might fail because of calls to functions whose source is not
+transactification might fail because of calls to functions whose source is not
 available and cannot be transactified. This can cause the entire build process
-to fail, where in fact the code could have be transactified without any error
+to fail, where in fact the code could have been transactified without any error
 by skipping these functions.
 
 This drawback was the main reason why we eventually chose to use Intel's STM
@@ -328,7 +328,7 @@ that collisions with these accesses will be detected.
 
 \subsection{Defining atomic blocks}
 Some transactions, after conversion contained code that belonged with the
-transactions, but did not need neccessarily to run atomically with the
+transactions, but did not need necessarily to run atomically with the
 transaction. An example might be a transaction removing an object from the
 cache, and freeing its memory. While the removal operation must be protected
 inside a transaction as it is using the shared memory structure of the cache,
@@ -351,14 +351,14 @@ call-site, and need not modify any of the called libraries.
 
 For example, the following critical section in the {\tt open\_entity} function
 (Figure~\ref{code:original-open-entity}) is responsible for retrieving a page
-to fullfill a request from the server. It will increment the reference count on
+to fulfill a request from the server. It will increment the reference count on
 the cached page, and register a decrement function to be invoked upon completing
 the request. When we converted the critical section into a transaction, we
 did not want the function {\tt apr\_pool\_cleanup\_register} to be called from
 inside the transaction, as transactifying it would require working an another
 library, the Apache Portable Runtime library, thus breaking encapsulation.
 
-The semantics of requests and subrequests in apache guranteed the request
+The semantics of requests and sub-requests in apache guaranteed the request
 could not be completed before the return of this function, therefore we could
 move the registration of the cleanup function out of the atomic section, as seen
 in Figure~\ref{code:transactified-open-entity}. However, having a commit
@@ -532,9 +532,9 @@ the serving of files requires enough computational resources to make the use of
 cache worthwhile.
 
 The man2html program is a Common Gateway Interface (CGI) program that serves
-unix manual (man) pages on internet sites. The pages are usually stores
+unix manual (man) pages on Internet sites. The pages are usually stores
 compressed in gzip format, and formatted using the troff format. The program
-receives a request for a man page from the webserver, uncompresses the required
+receives a request for a man page from the web server, uncompresses the required
 file and converts it to HTML. As every CGI program it outputs the result with
 relevant HTTP headers.
 
@@ -548,7 +548,7 @@ The pages were requested randomly according to Zipf distribution, whose
 parameter $s$ determines how frequently the most popular pages were visited,
 thus controlling the amount of locality in the requests.
 
-The experiments were done with two computers connected with Gigabit ethernet.
+The experiments were done with two computers connected with Gigabit Ethernet.
 Both machines were an 8 processors SMP of quad core 2.3GHz AMD Opterons 
 with 126GB of RAM, with a total of 32 cores. 
 
@@ -569,7 +569,7 @@ Apache's cache.
 
 \begin{figure*}
  \centering
- \subfigure[Request thorughput]{
+ \subfigure[Request throughput]{
   \includegraphics[width=8cm]{transaction-rate-client-server-0dot1.png}
   \label{fig:request-throughput-0.1}
  }
@@ -579,7 +579,7 @@ Apache's cache.
   \label{fig:response-time-0.1}
  }
  \caption{$s = 0.1$: Low locality. The penalty of STM increases to the point it
-    outweights the benefit of using the cache.}
+    outweighs the benefit of using the cache.}
 \end{figure*}
 
 With higher locality, such as $s=1$
@@ -598,7 +598,7 @@ STM.
   \includegraphics[width=8cm]{response-time-client-server-1.png}
   \label{fig:response-time-1}
  }
- \caption{$s = 1$: Medium locality. The panelty of STM remains but the cache is an improvement.}
+ \caption{$s = 1$: Medium locality. The penalty of STM remains but the cache is an improvement.}
 \end{figure*}
 
 With even higher locality ($s=2$), the contention on the cache is high even with
@@ -610,7 +610,7 @@ cores above which the transactified version performs as good as or better than
 the original version. For some reason the lock based version's performance also
 decrease when using a large number of cores, and while this is also true for the
 transactified version, it still remains with a little higher throughput than the
-orignal.
+original.
 
 \begin{figure*}
  \centering
@@ -633,7 +633,7 @@ was unable to work with multiple processes. In order to collect
 internal data about the transactions we ran Apache in a single process debugging
 mode. Figure~\ref{fig:one-process-abort-rate} shows the average number of aborts
 per second is shown, for the experiment with the transactified version, while
-Figure~\ref{fig:one-process-request-throughput}, shows the throughput achived by
+Figure~\ref{fig:one-process-request-throughput}, shows the throughput achieved by
 this experiment, compared with running the no-cache and no-transactions versions
 under the same settings. The increase in contention shown in
 Figure~\ref{fig:one-process-abort-rate} explains the decrease in request
@@ -684,7 +684,7 @@ transactional memory applications, following the methods we used.
 
 \acks
 
-We would like to thank Torvald Riegel from the Transacional Memory Research
+We would like to thank Torvald Riegel from the Transactional Memory Research
 group at Dresden University of Technology, for helping us with our efforts to
 use {\sc Tanger} for our research.
 
