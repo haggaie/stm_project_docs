@@ -23,6 +23,7 @@
 \usepackage{listings}
 \usepackage[numbers]{natbib}
 \usepackage[nohyphen]{underscore}
+\usepackage{subfigure}
 
 % code from sigplanconf.cls:
 \setlength{\bibsep}{3pt plus .5pt minus .25pt}
@@ -501,24 +502,25 @@ version.
 With low locality ($s=0.1$), the cache has almost no benefit, and the penalty of
 the STM increases with the number of processors, causing it to be less
 practical, as we learn from Figure~\ref{fig:request-throughput-0.1}
-and~\ref{fig:response-time-0.1}. 
+and~\ref{fig:response-time-0.1}. Almost all of the requests results in cache
+misses, therefore causing more work inside transactions, and increasing the
+relative cost of using STM. However, this situation isn't a typical use of
+Apache's cache.
 
-\begin{figure}
- \begin{center}
+\begin{figure*}
+ \centering
+ \subfigure[Request thorughput]{
   \includegraphics[width=8cm]{transaction-rate-client-server-0dot1.png}
- \end{center}
- \caption{Request throughput, $s = 0.1$: Low locality.
-          The penalty of STM increases to the point it outweights the benefit of
-          using the cache.} 
- \label{fig:request-throughput-0.1}
-\end{figure}
-\begin{figure}
- \begin{center}
+  \label{fig:request-throughput-0.1}
+ }
+ \hfill
+ \subfigure[Average response time]{
   \includegraphics[width=8cm]{response-time-client-server-0dot1.png}
- \end{center}
- \caption{Average response time, $s = 0.1$: Low locality}
- \label{fig:response-time-0.1}
-\end{figure}
+  \label{fig:response-time-0.1}
+ }
+ \caption{$s = 0.1$: Low locality. The penalty of STM increases to the point it
+    outweights the benefit of using the cache.}
+\end{figure*}
 
 With higher locality, such as $s=1$
 (Figure~\ref{fig:request-throughput-1},~\ref{fig:response-time-1}), the overhead
@@ -526,88 +528,93 @@ of STM is still significant, but using the cache is now worthwhile, even with
 STM. It is worth noting that when running on a single machine, without the
 overhead of the network
 (Figure~\ref{fig:request-throughput-single-host-1},~\ref{fig:response-time-single-host-1}),
-the decrease in performance caused by STM was even less significant. [XX Why?
-XX]
+the decrease in performance caused by STM was even less significant. [XX Do the
+single machine graphs contribute anything? XX]
 
-\begin{figure}
- \begin{center}
+\begin{figure*}
+ \centering
+ \subfigure[Request throughput]{
   \includegraphics[width=8cm]{transaction-rate-client-server-1.png}
- \end{center}
- \caption{Request throughput, $s = 1$: Medium locality.
-          The panelty of STM remains but the cache is an improvement.}
- \label{fig:request-throughput-1}
-\end{figure}
-\begin{figure}
- \begin{center}
+  \label{fig:request-throughput-1}
+ }
+ \hfill
+ \subfigure[Average response time]{
   \includegraphics[width=8cm]{response-time-client-server-1.png}
- \end{center}
- \caption{Average response time, $s = 1$: Medium locality}
- \label{fig:response-time-1}
-\end{figure}
-\begin{figure}
- \begin{center}
+  \label{fig:response-time-1}
+ }
+ \caption{$s = 1$: Medium locality. The panelty of STM remains but the cache is an improvement.}
+\end{figure*}
+
+\begin{figure*}
+ \centering
+ \subfigure[Request throughput]{
   \includegraphics[width=8cm]{transaction-rate-single-host-1.png}
- \end{center}
- \caption{Request throughput, Single host, $s = 1$: Medium locality.
-          With a single host, the additional latency of the network is
-          eliminated, achieving generally higher results than with two hosts. }
- \label{fig:request-throughput-single-host-1}
-\end{figure}
-\begin{figure}
- \begin{center}
+  \label{fig:request-throughput-single-host-1}
+ }
+ \hfill
+ \subfigure[Average response time]{
   \includegraphics[width=8cm]{response-time-single-host-1.png}
- \end{center}
- \caption{Average response time, Single host, $s = 1$: Medium locality}
- \label{fig:response-time-single-host-1}
-\end{figure}
+  \label{fig:response-time-single-host-1}
+ }
+ \caption{Single host, $s = 1$: Medium locality.
+          With a single host, the additional latency of the network is
+          eliminated, achieving generally higher results than with two hosts. [XX should we keep these? XX]}
+\end{figure*}
 
 With even higher locality ($s=2$), the contention on the cache is high even with
 small number of cores, and both versions show similar results.
 (Figure~\ref{fig:request-throughput-2},~\ref{fig:response-time-2}).
 
-\begin{figure}
- \begin{center}
+It is worth noting that in all the tests above there is a minimum number of
+cores above which the transactified version performs as good as or better than
+the original version. For some reason the lock based version's performance also
+decrease when using a large number of cores, and while this is also true for the
+transactified version, it still remains with a little higher throughput than the
+orignal.
+
+\begin{figure*}
+ \centering
+ \subfigure[Request throughput]{
   \includegraphics[width=8cm]{transaction-rate-client-server-2.png}
- \end{center}
- \caption{Request throughput, $s = 2$: High locality.}
- \label{fig:request-throughput-2}
-\end{figure}
-\begin{figure}
- \begin{center}
+  \label{fig:request-throughput-2}
+ }
+ \hfill
+ \subfigure[Average response time]{
   \includegraphics[width=8cm]{response-time-client-server-2.png}
- \end{center}
- \caption{Average response time, $s = 2$: High locality}
- \label{fig:response-time-2}
-\end{figure}
+  \label{fig:response-time-2}
+ }
+ \caption{$s = 2$: High locality}
+\end{figure*}
 
-As notes in Section~\ref{sec:wishlist-statistics}, Intel STM manager statistics
-mechanism was unable to work with multiple processes. In order to collect
+In order to investigate this decrease in throughput, we wanted to show the
+transaction abort rate for these experiments. As notes in
+Section~\ref{sec:wishlist-statistics}, Intel STM manager statistics mechanism
+was unable to work with multiple processes. In order to collect
 internal data about the transactions we ran Apache in a single process debugging
-mode. In Figure~\ref{fig:one-process-request-throughput}, the results show that
-STM achieves comparable results to the original version. In
-Figure~\ref{fig:one-process-abort-rate} the average number of aborts per second
-is shown, for the experiment with the transactified version. The increase in
-contention shown here explains the decrease in request throughput.
+mode. Figure~\ref{fig:one-process-abort-rate} shows the average number of aborts
+per second is shown, for the experiment with the transactified version, while
+Figure~\ref{fig:one-process-request-throughput}, shows the throughput achived by
+this experiment, compared with running the no-cache and no-transactions versions
+under the same settings. The increase in contention shown in
+Figure~\ref{fig:one-process-abort-rate} explains the decrease in request
+throughput, for the transactional version.
 
-\begin{figure}
- \begin{center}
+\begin{figure*}
+ \centering
+ \subfigure[Request throughput. Without the additional processes apache fails
+            to scale with high number of cores. STM suffers a decrease in
+            performance but is comparable.]{
   \includegraphics[width=8cm]{transaction-rate-single-process.png}
- \end{center}
- \caption{Request throughput, $s = 1$: Medium locality, a single process.
-          Without the additional processes apache fails to scale with high
-          number of cores. STM suffers a decrease in performance but is
-          comparable.} 
- \label{fig:one-process-request-throughput}
-\end{figure}
-\begin{figure}
- \begin{center}
+  \label{fig:one-process-request-throughput}
+ }
+ \hfill
+ \subfigure[Abort rate. The abort rate increase with the number of cores might
+            explain the decrease in transaction rate.]{
   \includegraphics[width=8cm]{abort-rate.png}
- \end{center}
- \caption{Abort Rate, $s = 1$: Medium locality, a single process.
-          The abort rate increase with the number of cores might explain the 
-          decrease in transaction rate.}
- \label{fig:one-process-abort-rate}
-\end{figure}
+  \label{fig:one-process-abort-rate}
+ }
+ \caption{$s = 1$: Medium locality, a single process.}
+\end{figure*}
 
 \section{Conclusions}\label{sec:conclusions}
 \begin{itemize}
