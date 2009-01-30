@@ -101,7 +101,7 @@ concurrent data structures, such as red-black trees and skip lists
 \cite{herlihy:DSTM, fraser:practical:thesis:2003}, and isolated scientific
 algorithms (such as STAMP~\cite{caominh:stamp:iiswc:2008}).
 Moreover, it was mostly used to implement benchmarks explicitly with
-transactional memory from scratch. Additionally, we've seen benchmarks such as
+transactional memory from scratch. Additionally, we have seen benchmarks such as
 STMBench7~\cite{STMBench7}, which measures operations on a complex yet still
 artificial object graph.
 
@@ -247,9 +247,9 @@ transactifyication might fail because of calls to functions whose source is not
 available and cannot be transactified. This can cause the entire build process
 to fail, where in fact the code can be transactified without any error.
 
-This was the main reason why we eventually chose to use Intel's STM Compiler.
-Lately a new release of tanger was announced, one in which the developer can
-annotate which functions should be transactified, however we didn't get a
+This drawback was the main reason why we eventually chose to use Intel's STM 
+Compiler. Lately, a new release of tanger was announced, one in which the developer 
+can annotate which functions should be transactified. However, we did not get a
 chance to try it.
 
 \subsection{What to transactify}
@@ -268,16 +268,16 @@ that collisions with these accesses will be detected.
 
 \subsection{Defining atomic blocks}
 Some transactions, after conversion contained code that belonged with the
-transactions, but didn't need neccessarily to run atomically with the
+transactions, but did not need neccessarily to run atomically with the
 transaction. An example might be a transaction removing an object from the
 cache, and freeing its memory. While the removal operation must be protected
-inside a transaction, as it is using the shared memory structure of the cache,
+inside a transaction as it is using the shared memory structure of the cache,
 the memory release can happen any time later, since no other thread can point to
 the removed object after it had been removed from the cache. 
 
 For lock based systems, having the memory release as part of the critical
 section might cause a thread to hold the critical section a little longer than
-needed, but doesn't cause any problems other than that. On transactional memory
+needed, but does not cause any problems other than that. On transactional memory
 systems, having accesses to other memory structures such as those required by
 memory management might cause collisions with other threads, thus slowing down
 the system in a similar way. In addition, the cleanup functions need to be
@@ -294,12 +294,12 @@ For example, the following critical section in the {\tt open\_entity} function
 to fullfill a request from the server. It will increment the reference count on
 the cached page, and register a decrement function to be invoked upon completing
 the request. When we converted the critical section into a transaction, we
-didn't want the function {\tt apr\_pool\_cleanup\_register} to be called from
+did not want the function {\tt apr\_pool\_cleanup\_register} to be called from
 inside the transaction, as transactifying it would require working an another
 library, the Apache Portable Runtime library, thus breaking encapsulation.
 
-The semantics of requests and subrequest in apache guranteed the request
-couldn't be completed before the return of this function, therefore we could
+The semantics of requests and subrequests in apache guranteed the request
+could not be completed before the return of this function, therefore we could
 move the registration of the cleanup function out of the atomic section, as seen
 in Figure~\ref{code:transactified-open-entity}. However, having a commit
 handler construct in the language would make such conversions easier, with it we
@@ -504,7 +504,7 @@ the STM increases with the number of processors, causing it to be less
 practical, as we learn from Figure~\ref{fig:request-throughput-0.1}
 and~\ref{fig:response-time-0.1}. Almost all of the requests results in cache
 misses, therefore causing more work inside transactions, and increasing the
-relative cost of using STM. However, this situation isn't a typical use of
+relative cost of using STM. However, this situation is not a typical use of
 Apache's cache.
 
 \begin{figure*}
