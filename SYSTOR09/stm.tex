@@ -87,15 +87,17 @@ convertibility and completeness are becoming acute in order to allow TM to shift
 into full-fledged commercial tool. In this work we try via a design example to answer how 
 far from achieving the goal we are at. 
 
-To date, transactional memory was mostly employed within the niche of complex concurrent data 
-structures (such as red-black trees, skip list  [XX What more? Add citations XX]) and 
-isolated scientific algorithms (such as STAMP~\cite{caominh:stamp:iiswc:2008}) . Moreover, it was mostly 
-used to implement benchmarks explicitly with transactional memory from scratch. In this paper, 
-we use transactional memory for the first time in the context of large-scale industrial 
-software, which, moreover, does not pertain to any of the typical niches of transactional 
-memory benchmarks. Furthermore, we convert legacy code, which used lock-based synchronization, 
-to work with transactional memory, rather than write the benchmark from scratch. We refer to 
-this conversion process as \emph{transactification}.
+To date, transactional memory was mostly employed within the niche of complex
+concurrent data structures (such as red-black trees \cite{herlihy:DSTM}, skip
+list  [XX What more? Add citations XX]) and isolated scientific algorithms (such
+as STAMP~\cite{caominh:stamp:iiswc:2008}) . Moreover, it was mostly used to
+implement benchmarks explicitly with transactional memory from scratch. In this
+paper, we use transactional memory for the first time in the context of
+large-scale industrial software, which, moreover, does not pertain to any of the
+typical niches of transactional memory benchmarks. Furthermore, we convert
+legacy code, which used lock-based synchronization, to work with transactional
+memory, rather than write the benchmark from scratch. We refer to this
+conversion process as \emph{transactification}.
 
 Our goal for this exercise is twofold. First, we wanted to examine whether the transactional 
 memory paradigm is broadly applicable, outside its traditional niches, in contexts where a 
