@@ -15,12 +15,19 @@
 %-----------------------------------------------------------------------------
 
 
-\documentclass[preprint,natbib,11pt]{sigplanconf}
+\documentclass[preprint,11pt]{sigplanconf}
 % \documentclass[natbib,11pt]{sigplanconf}
 
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{listings}
+\usepackage[numbers]{natbib}
+\usepackage[nohyphen]{underscore}
+
+% code from sigplanconf.cls:
+\setlength{\bibsep}{3pt plus .5pt minus .25pt}
+%\bibpunct{(}{)}{;}{A}{}{,}
+\let \cite = \citep
 
 \begin{document}
 
@@ -37,7 +44,7 @@
 % \subtitle{Subtitle Text, if any}
 
 \authorinfo{Haggai Eran\and Ohad Lutzky\and Zvika Guz\and Idit Keidar}
-           {Technion - Israel Institute of Technology}
+           {Department of Electrical Engineering, Technion - Israel Institute of Technology}
            {haggaie@tx.technion.ac.il\and lutzky@gmail.com\and zguz@tx.technion.ac.il\and idish@ee.technion.ac.il}
 %\authorinfo{Name2\and Name3}
 %           {Affiliation2/3}
@@ -58,20 +65,20 @@ intricacy of commit blocks. We also stumbled across weaknesses of
 existing software transactional memory (STM) toolkits, leading us
 to identify desirable features they are currently lacking.
 Finally, we present performance results from running
-Apache on a 32-core machine, showing that, surprisingly, the performance
-of the STM-based version is close to that of the lock-based version.
-These results suggest that there are applications for which the overhead
-of using a software-only implementation of transactional memory
-is insignificant.
+Apache on a 32-core machine, showing that, surprisingly, there are scenarios
+where the performance of the STM-based version is close to that of the
+lock-based version.  These results suggest that there are applications for which
+the overhead of using a software-only implementation of transactional memory is
+insignificant.
 \end{abstract}
 
-\category{CR-number}{subcategory}{third-level}
+\category{D.1.3}{Programming Techniques}{Concurrent Programming}
 
 \terms
-term1, term2
+Measurement, Performance, Experimentation
 
 \keywords
-keyword1, keyword2
+Sortware Transactional Memory
 
 \section{Introduction}
 The vast shift to multicore machines in the last couple of years indicates the 
@@ -88,16 +95,21 @@ into full-fledged commercial tool. In this work we try via a design example to a
 far from achieving the goal we are at. 
 
 To date, transactional memory was mostly employed within the niche of complex
-concurrent data structures (such as red-black trees \cite{herlihy:DSTM}, skip
-list  [XX What more? Add citations XX]) and isolated scientific algorithms (such
-as STAMP~\cite{caominh:stamp:iiswc:2008}) . Moreover, it was mostly used to
-implement benchmarks explicitly with transactional memory from scratch. In this
-paper, we use transactional memory for the first time in the context of
-large-scale industrial software, which, moreover, does not pertain to any of the
-typical niches of transactional memory benchmarks. Furthermore, we convert
-legacy code, which used lock-based synchronization, to work with transactional
-memory, rather than write the benchmark from scratch. We refer to this
-conversion process as \emph{transactification}.
+concurrent data structures, such as red-black trees and skip lists
+\cite{herlihy:DSTM, fraser:practical:thesis:2003}, and isolated scientific
+algorithms (such as STAMP~\cite{caominh:stamp:iiswc:2008}).
+Moreover, it was mostly used to implement benchmarks explicitly with
+transactional memory from scratch. Additionally, we've seen benchmarks such as
+STMBench7~\cite{STMBench7}, which measures operations on a complex yet still
+artificial object graph.
+
+In this paper, we use transactional memory
+for the first time in the context of large-scale industrial software, which,
+moreover, does not pertain to any of the typical niches of transactional memory
+benchmarks. Furthermore, we convert legacy code, which used lock-based
+synchronization, to work with transactional memory, rather than write the
+benchmark from scratch. We refer to this conversion process as
+\emph{transactification}.
 
 Our goal for this exercise is twofold. First, we wanted to examine whether the transactional 
 memory paradigm is broadly applicable, outside its traditional niches, in contexts where a 
@@ -110,17 +122,19 @@ in legacy code, one can anticipate a growing need for transactification of legac
 We sought to learn how painful such a process can be, and what can be done in order to 
 facilitate it.
 
-The rest of the paper is organized as follows: After a brief review of the apache application 
-and the STM tools used in our work (Section~\ref{sec:background}), we describe in details the
-transactification process, including the hurdles we have encountered and the means used to overcome
-them (Section~\ref{sec:transactification}). We then study (in Section~\ref{sec:evaluation}) the
-performance of the transactified version, showing that the Transactified version is competitive to
-the legacy code in performance. This demonstrates that for some applications, the performance
-penalty of STM may not be as severe as usually assumed, and will hence justify the porting to TM
-with all the benefits it endures. Finally, we summarizes (in Section~\ref{sec:conclusions}) the
-lesson learned in the transactification process, including our wish-list
-(Section~\ref{sec:wishlist}) for future STM versions.
-
+The rest of the paper is organized as follows: After a brief review of the
+apache application and the STM tools used in our work
+(Section~\ref{sec:background}), we describe in details the transactification
+process, including the hurdles we have encountered and the means used to
+overcome them (Section~\ref{sec:transactification}) including our wish-list
+(Section~\ref{sec:wishlist}) for future STM versions. We then study (in
+Section~\ref{sec:evaluation}) the performance of the transactified version,
+showing that the Transactified version is competitive to the legacy code in
+performance. This demonstrates that for some applications, the performance
+penalty of STM may not be as severe as usually assumed, and will hence justify
+the porting to TM with all the benefits it endures. Finally, we summarizes (in
+Section~\ref{sec:conclusions}) the lesson learned in the transactification
+process.
 
 \section{Related Work}
 \section{Background: Software and Tools}\label{sec:background}
@@ -145,19 +159,19 @@ Figure~\ref{fig:apache-worker-MPM}.
 
 There are not many points of interaction between the worker threads themselves,
 where transactional memory can be used. One such place is Apache's memory cache
-implemented by the {\tt mod\_mem\_cache}~\cite{apache:mod_mem_cache} module. This
-module enables the workers of each process to share a cache of recently served
-requests. A new request can be served from the memory cache, and save the time
-required to access the disk and generate the requested page. Since the cache is
-shared between multiple threads, it is synchronized by a single lock, therefore
-a good candidate for converting into transactional memory.
+implemented by the {\tt mod\_mem\_cache} module. This module enables the workers
+of each process to share a cache of recently served requests. A new request can
+be served from the memory cache, and save the time required to access the disk
+and generate the requested page. Since the cache is shared between multiple
+threads, it is synchronized by a single lock, therefore a good candidate for
+converting into transactional memory.
 
 Apache's cache is implemented with a couple of modules. The first, {\tt
-mod\_cache}~\cite{apache:mod_cache}, implements the logic related to caching. It
-tests the metadata of each requests to see if it can be supplied from the cache,
-according to the request's HTTP headers and the system configuration. It uses
-one of the underlying cache implementation modules, {\tt mod\_mem\_cache} or
-{\tt mod\_disk\_cache}~\cite{apache:mod_disk_cache} to do the actual caching.
+mod\_cache}, implements the logic related to caching. It tests the metadata of
+each requests to see if it can be supplied from the cache, according to the
+request's HTTP headers and the system configuration. It uses one of the
+underlying cache implementation modules, {\tt mod\_mem\_cache} or {\tt
+mod\_disk\_cache} to do the actual caching.
 
 The {\tt mod\_mem\_cache} module implements a memory cache using a shared hash
 table and priority queue. The key to the hash table is the URL of the request,
@@ -170,18 +184,20 @@ cache miss, and the entry size.
 
 \subsection{C STM Systems}
 C and C++ STM systems divide into two kinds: Library based and compiler based.
-Library based STMs are built as a C library. Every transaction begins with a
-call into the library, and commits by another call. All reads and writes to
-global variables must be done through special library functions when in a
-transaction. This requires a great amount of work for converting an application
-to use STM. Not only accesses to global memory in the function that started the
-transaction must be converted, but also any access from any function being
-called from this function. 
+Library based STMs \cite{TL2,felber2008tinystm,RSTM} are built as a C library.
+Every transaction begins with a call into the library, and commits by another
+call. All reads and writes to global variables must be done through special
+library functions when in a transaction. This requires a great amount of work
+for converting an application to use STM. Not only accesses to global memory in
+the function that started the transaction must be converted, but also any access
+from any function being called from this function. 
 
-In contrast, compiler-based STM use a specialized compiler, which has extended
-syntax for transactional memory atomic blocks. The compiler can then
-automatically convert memory accesses inside transactions into calls to the
-underlying library, a process sometimes referred as \emph{transactification}. 
+In contrast, compiler-based STM
+\cite{felber2007tanger,icc,gcctm,baek:opentm:pact:2007} use a specialized
+compiler, which has extended syntax for transactional memory atomic blocks. The
+compiler can then automatically convert memory accesses inside transactions
+into calls to the underlying library. The term \emph{transactification}
+sometimes refer to this process.
 
 \subsubsection{\sc Tanger}
 The {\sc Tanger}~\cite{felber2007tanger} transctifying compiler is an
@@ -303,9 +319,9 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
       /* cache is worried about overall counts, not 'open' ones */
       cache_update(sconf->cache_cache, obj);
 
-      /* If this is a subrequest, register the cleanup against the main request.
-       * This will prevent the cache object from being cleaned up from under the
-       * request after the subrequest is destroyed. */
+      /* If this is a subrequest, register the cleanup against the main
+       * request.  This will prevent the cache object from being cleaned up
+       * from under the request after the subrequest is destroyed. */
       rtmp = r;
       while (rtmp) {
         rmain = rtmp;
@@ -345,10 +361,9 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key)
   /* Register the object for removal from the cache after cleanup */
   if (obj && obj->complete) {
     request_rec *rmain=r, *rtmp;
-    /* If this is a subrequest, register the cleanup against the main request.
-     * This will prevent the cache object from being cleaned up from under the
-     * request after the subrequest is destroyed.
-     */
+    /* If this is a subrequest, register the cleanup against the main
+     * request.  This will prevent the cache object from being cleaned up
+     * from under the request after the subrequest is destroyed.  */
     rtmp = r;
     while (rtmp) {
       rmain = rtmp;
@@ -411,9 +426,9 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
         /* cache is worried about overall counts, not 'open' ones */
         cache_update(sconf->cache_cache, obj);
 
-        /* If this is a subrequest, register the cleanup against the main request.
-         * This will prevent the cache object from being cleaned up from under the
-         * request after the subrequest is destroyed. */
+        /* If this is a subrequest, register the cleanup against the main
+         * request.  This will prevent the cache object from being cleaned
+         * up from under the request after the subrequest is destroyed. */
         rtmp = r;
         while (rtmp) {
           rmain = rtmp;
@@ -434,6 +449,8 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
 \label{code:closure-open-entity}
 \end{figure*}
 
+% \clearpage
+
 \subsection{Statistics and Profiling}\label{sec:wishlist-statistics}
 Intel's STM manager collects statistics about the transactions being run, their
 size, abort rates, etc. Unfortunately however, it cannot work with a
@@ -443,12 +460,12 @@ process, or having only black box measurements of the system.
 
 \section{Evaluation}\label{sec:evaluation}
 \subsection{Methodology} 
-The transactified web server was evaluated using \emph{Siege}~\cite{siege}, an
+The transactified web server was evaluated using \emph{Siege} \cite{siege}, an
 HTTP load testing tool. The server was loaded with the set of UNIX man-pages - a
 set of small textual files typical of some web sites. Each page was served using
-the \emph{man2html}~\cite{man2html} program, uncompressed and converted into
-HTML, to make sure the serving of files requires enough computational resources
-to make the use of cache worthwhile.
+the \emph{man2html} program, uncompressed and converted into HTML, to make sure
+the serving of files requires enough computational resources to make the use of
+cache worthwhile.
 
 The man2html program is a Common Gateway Interface (CGI) program that serves
 unix manual (man) pages on internet sites. The pages are usually stores
@@ -467,7 +484,7 @@ The pages were requested randomly according to Zipf distribution, whose
 parameter $s$ determines how frequently the most popular pages were visited,
 thus controlling the amount of locality in the requests.
 
-The experiments were done with two computers connected with 100Mb ethernet.
+The experiments were done with two computers connected with Gigabit ethernet.
 Both machines were an 8 processors SMP of quad core 2.3GHz AMD Opterons 
 with 126GB of RAM, with a total of 32 cores. 
 

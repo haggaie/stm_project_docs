@@ -18,18 +18,6 @@
   year           = 2008
 }
 
-@Misc{apache:mod_disk_cache,
-  Author         = {{The Apache Software Foundation}},
-  Title          = {Apache's mod\_disk\_cache {M}emory {C}ache {M}odule},
-  url            = {http://httpd.apache.org/docs/2.2/mod/mod\_disk\_cache.html}
-}
-
-@Misc{apache:mod_cache,
-  Author         = {{The Apache Software Foundation}},
-  Title          = {Apache's mod\_cache {M}emory {C}ache {M}odule},
-  url            = {http://httpd.apache.org/docs/2.2/mod/mod\_cache.html}
-}
-
 @InProceedings{icc,
   Author         = {Yang Ni and Adam Welc and Ali-Reza Adl-Tabatabai and
                    Moshe Bach and Sion Berkowits and James Cownie and
@@ -59,17 +47,6 @@
   Address        = {Palo Alto, California},
   month          = {Mar},
   year           = 2004
-}
-
-@Misc{apache:mod_mem_cache,
-  Author         = {{The Apache Software Foundation}},
-  Title          = {Apache's mod\_mem\_cache {M}emory {C}ache {M}odule},
-  url            = {http://httpd.apache.org/docs/2.2/mod/mod\_mem\_cache.html}
-}
-
-@Misc{man2html,
-  Title          = {Man2html package source code},
-  url            = {http://packages.ubuntu.com/source/intrepid/man2html}
 }
 
 @Misc{gcctm,
@@ -112,27 +89,13 @@
   year           = 2008
 }
 
-@Misc{tm:commit-handlers,
-  Author         = {Mcdonald, A. and Chung, J. and Carlstrom, B. and Minh,
-                   C. and Chafi, H. and Kozyrakis, C. and Olukotun, K. },
-  Title          = {Architectural Semantics for Practical Transactional
-                   Memory},
-  abstract       = {Transactional Memory (TM) simplifies parallel
-                   programming by allowing for parallel execution of
-                   atomic tasks. Thus far, TM systems have focused on
-                   implementing transactional state buffering and conflict
-                   resolution. Missing is a robust hardware/software
-                   interface, not limited to simplistic instructions
-                   defining transaction boundaries. Without rich
-                   semantics, current TM systems cannot support basic
-                   features of modern programming languages and operating
-                   systems such as transparent library calls,...},
-  citeulike-article-id = {1880731},
-  keywords       = {memory, nested, parallel, transactional},
-  posted-at      = {2007-11-07 19:56:06},
-  priority       = {3},
-  url            = {http://citeseer.ist.psu.edu/mcdonald06architectural.html},
-  year           = 2006
+@INPROCEEDINGS{tm:commit-handlers,
+    author = {Austen Mcdonald and Jaewoong Chung and Brian D. Carlstrom and Chi Cao Minh and Hassan Chafi and Christos Kozyrakis and Kunle Olukotun},
+    title = {Architectural Semantics for Practical Transactional Memory},
+    booktitle = {In Proceedings of the 33rd International Symposium on Computer Architecture},
+    year = {2006},
+    pages = {53--65},
+    publisher = {IEEE Computer Society}
 }
 
 @InProceedings{felber2007tanger,
@@ -163,5 +126,84 @@
  doi = {http://doi.acm.org/10.1145/872035.872048},
  publisher = {ACM},
  address = {New York, NY, USA},
+}
+
+@inproceedings{TL2
+, author = "D. Dice, O. Shalev, and N. Shavit"
+, title = "Transactional Locking II"
+, booktitle = "Proc. of the 20th International Symposium on Distributed Computing (DISC 2006)"
+, site = "Stockholm, Sweden"
+, year = 2006
+, pages = "194--208"
+}
+
+@incollection{baek:opentm:pact:2007,
+  author        = {Baek, Woongki and Cao Minh, Chi and Trautmann, Martin and Kozyrakis, Christos and Olukotun, Kunle},
+  title         = {The OpenTM Transactional Application Programming Interface},
+  booktitle     = {Proceedings of the 16th International Conference on Parallel Architectures and Compilation Techniques},
+  pages         = {376--387},
+  month         = {Sep},
+  year          = {2007},
+}
+
+@phdthesis{fraser:practical:thesis:2003,
+  author	= {Fraser, Keir},
+  title		= {Practical lock freedom},
+  year		= {2003},
+  school	= {Cambridge University Computer Laboratory},
+  note		= {Also available as Technical Report UCAM-CL-TR-579},
+}
+
+@InProceedings{STMBench7,
+  Author         = {Guerraoui, Rachid and Kapalka, Michal and Vitek, Jan},
+  Title          = {{STMB}ench7: {A} {B}enchmark for {S}oftware
+                   {T}ransactional {M}emory},
+  BookTitle      = {Second {E}uropean {S}ystems {C}onference
+                   {E}uro{S}ys2007},
+  abstract       = {Software transactional memory (STM) is a promising
+                   technique for controlling concurrency in modern
+                   multi-processor architectures. STM aims to be more
+                   scalable than explicit coarse-grained locking and
+                   easier to use than fine-grained locking. However, STM
+                   implementations have yet to demonstrate that their
+                   runtime overheads are acceptable. To date, empiric
+                   evaluations of these implementations have suffered from
+                   the lack of realistic benchmarks. Measuring performance
+                   of an STM in an overly simplified setting can be at
+                   best uninformative and at worst misleading as it may
+                   steer researchers to try to optimize irrelevant aspects
+                   of their implementations. This paper presents
+                   STMBench7: a candidate benchmark for evaluating STM
+                   implementations. The underlying data structure consists
+                   of a set of graphs and indexes intended to be
+                   suggestive of many complex applications, e.g., CAD/CAM.
+                   A collection of operations is supported to model a wide
+                   range of workloads and concurrency patterns. Companion
+                   locking strategies serve as a baseline for STM
+                   performance comparisons. STMBench7 strives for
+                   simplicity. Users may choose a workload, number of
+                   threads, benchmark length, as well as the possibility
+                   of structure modification and the nature of traversals
+                   of shared data structures. We illustrate the use of
+                   STMBench7 with an evaluation of a well-known software
+                   transactional memory implementation.},
+  affiliation    = {EPFL},
+  details        = {http://infoscience.epfl.ch/record/101108},
+  documenturl    = {http://infoscience.epfl.ch/getfile.py?recid=101108&mode=best},
+  keywords       = {Software transactional memory; Benchmarks},
+  location       = {Lisboa, Portugal},
+  oai-id         = {oai:infoscience.epfl.ch:101108},
+  oai-set        = {conf; fulltext; fulltext-public},
+  review         = {REVIEWED},
+  status         = {PUBLISHED},
+  unit           = {LPD},
+  year           = 2007
+}
+
+@INPROCEEDINGS{RSTM,
+    author = {Virendra J. Marathe and Michael F. Spear and Christopher Heriot and Athul Acharya and David Eisenstat and William N. Scherer Iii and Michael L. Scott},
+    title = {Lowering the overhead of nonblocking software transactional memory},
+    booktitle = {Dept. of Computer Science, Univ. of Rochester},
+    year = {2006}
 }
 
