@@ -317,8 +317,8 @@ We have decided to focus our change in Apache with the memory cache module. As
 described in Section \ref{sec:apache}, it is a significant point of interaction
 between Apache's worker threads, and since it is implemented with a course-grained
 lock, it is ideal for converting into STM. Another advantage is that it is a
-well encapsulated module, allowing us to see how can we convert only a small
-part of a larger system.
+well encapsulated module, allowing us to study the effect of converting a small 
+part of code on the larger system.
 
 The conversion process included converting critical sections protected by the
 cache module's main lock into atomic blocks, and decorating required functions
@@ -462,9 +462,15 @@ From our perspective, commit handlers could have been used to make the
 modifications we wanted in the atomic blocks, and move finalization functions
 out of atomic blocks just by registering them as commit handlers. In the given
 example, the call to {\tt apr\_pool\_cleanup\_register} could have been
-converted into a call registering this function as a commit handler.
+converted into a call registering this function as a commit handler. 
 
-\section{Wish List}\label{sec:wishlist}
+
+\section{Wish List}\label{sec:wishlist} 
+During the transactification process we have identified several apparatus whose
+absence have complicated the conversion process. In this section we indicate
+several such issues in the hope that it will expedite their assimilation into
+future STMs.
+
 \subsection{Handler Closures}
 While commit handlers can aid a lot in the process of transactifying a legacy
 application, their current syntax in Intel STM Compiler is very limiting.
