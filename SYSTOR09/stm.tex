@@ -526,11 +526,7 @@ Apache's cache.
 With higher locality, such as $s=1$
 (Figure~\ref{fig:request-throughput-1},~\ref{fig:response-time-1}), the overhead
 of STM is still significant, but using the cache is now worthwhile, even with
-STM. It is worth noting that when running on a single machine, without the
-overhead of the network
-(Figure~\ref{fig:request-throughput-single-host-1},~\ref{fig:response-time-single-host-1}),
-the decrease in performance caused by STM was even less significant. [XX Do the
-single machine graphs contribute anything? XX]
+STM. 
 
 \begin{figure*}
  \centering
@@ -544,22 +540,6 @@ single machine graphs contribute anything? XX]
   \label{fig:response-time-1}
  }
  \caption{$s = 1$: Medium locality. The panelty of STM remains but the cache is an improvement.}
-\end{figure*}
-
-\begin{figure*}
- \centering
- \subfigure[Request throughput]{
-  \includegraphics[width=8cm]{transaction-rate-single-host-1.png}
-  \label{fig:request-throughput-single-host-1}
- }
- \hfill
- \subfigure[Average response time]{
-  \includegraphics[width=8cm]{response-time-single-host-1.png}
-  \label{fig:response-time-single-host-1}
- }
- \caption{Single host, $s = 1$: Medium locality.
-          With a single host, the additional latency of the network is
-          eliminated, achieving generally higher results than with two hosts. [XX should we keep these? XX]}
 \end{figure*}
 
 With even higher locality ($s=2$), the contention on the cache is high even with
