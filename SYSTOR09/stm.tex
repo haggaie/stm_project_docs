@@ -89,7 +89,7 @@ far from achieving the goal we are at.
 
 To date, transactional memory was mostly employed within the niche of complex concurrent data 
 structures (such as red-black trees, skip list  [XX What more? Add citations XX]) and 
-isolated scientific algorithms (such as STAMP ~\cite{caominh:stamp:iiswc:2008}) . Moreover, it was mostly 
+isolated scientific algorithms (such as STAMP~\cite{caominh:stamp:iiswc:2008}) . Moreover, it was mostly 
 used to implement benchmarks explicitly with transactional memory from scratch. In this paper, 
 we use transactional memory for the first time in the context of large-scale industrial 
 software, which, moreover, does not pertain to any of the typical niches of transactional 
@@ -109,29 +109,29 @@ We sought to learn how painful such a process can be, and what can be done in or
 facilitate it.
 
 The rest of the paper is organized as follows: After a brief review of the apache application 
-and the STM tools used in our work (Section ~\ref{sec:background}), we describe in details the
+and the STM tools used in our work (Section~\ref{sec:background}), we describe in details the
 transactification process, including the hurdles we have encountered and the means used to overcome
-them (Section ~\ref{sec:transactification}). We then study (in Section ~\ref{sec:evaluation}) the
+them (Section~\ref{sec:transactification}). We then study (in Section~\ref{sec:evaluation}) the
 performance of the transactified version, showing that the Transactified version is competitive to
 the legacy code in performance. This demonstrates that for some applications, the performance
 penalty of STM may not be as severe as usually assumed, and will hence justify the porting to TM
-with all the benefits it endures. Finally, we summarizes (in Section ~\ref{sec:conclusions}) the
-lesson learned in the transactification process, including our wish-list (Section
-~\ref{sec:wishlist}) for future STM versions.
+with all the benefits it endures. Finally, we summarizes (in Section~\ref{sec:conclusions}) the
+lesson learned in the transactification process, including our wish-list
+(Section~\ref{sec:wishlist}) for future STM versions.
 
 
 \section{Related Work}
 \section{Background: Software and Tools}\label{sec:background}
 \subsection{Apache}\label{sec:apache}
-Apache ~\cite{apache} HTTP server is a popular web server application written in
+Apache~\cite{apache} HTTP server is a popular web server application written in
 C. It supports working on multiprocessor machines with several multi-processing
 modules (MPMs) each offering a different strategy for handling requests and
 distributing the work. The most popular threaded MPM is the \emph{worker} MPM,
 which works by running multiple worker-threads under several processes, each
 thread handles a single request at a time. In each such process there are
 several worker threads, and also a listener thread that fetches incoming
-requests and dispatches them to the available workers, as illustrated in Figure
-~\ref{fig:apache-worker-MPM}.
+requests and dispatches them to the available workers, as illustrated in
+Figure~\ref{fig:apache-worker-MPM}.
 
 \begin{figure}
  \begin{center}
@@ -143,7 +143,7 @@ requests and dispatches them to the available workers, as illustrated in Figure
 
 There are not many points of interaction between the worker threads themselves,
 where transactional memory can be used. One such place is Apache's memory cache
-implemented by the {\tt mod\_mem\_cache} ~\cite{apache:mod_mem_cache} module. This
+implemented by the {\tt mod\_mem\_cache}~\cite{apache:mod_mem_cache} module. This
 module enables the workers of each process to share a cache of recently served
 requests. A new request can be served from the memory cache, and save the time
 required to access the disk and generate the requested page. Since the cache is
@@ -151,11 +151,11 @@ shared between multiple threads, it is synchronized by a single lock, therefore
 a good candidate for converting into transactional memory.
 
 Apache's cache is implemented with a couple of modules. The first, {\tt
-mod\_cache} ~\cite{apache:mod_cache}, implements the logic related to caching. It
+mod\_cache}~\cite{apache:mod_cache}, implements the logic related to caching. It
 tests the metadata of each requests to see if it can be supplied from the cache,
 according to the request's HTTP headers and the system configuration. It uses
 one of the underlying cache implementation modules, {\tt mod\_mem\_cache} or
-{\tt mod\_disk\_cache} ~\cite{apache:mod_disk_cache} to do the actual caching.
+{\tt mod\_disk\_cache}~\cite{apache:mod_disk_cache} to do the actual caching.
 
 The {\tt mod\_mem\_cache} module implements a memory cache using a shared hash
 table and priority queue. The key to the hash table is the URL of the request,
@@ -182,19 +182,19 @@ automatically convert memory accesses inside transactions into calls to the
 underlying library, a process sometimes referred as \emph{transactification}. 
 
 \subsubsection{\sc Tanger}
-The {\sc Tanger} ~\cite{felber2007tanger} transctifying compiler is an
-open-source academic compiler extension for LLVM ~\cite{LLVM:CGO04}, an
+The {\sc Tanger}~\cite{felber2007tanger} transctifying compiler is an
+open-source academic compiler extension for LLVM~\cite{LLVM:CGO04}, an
 extensible compiler framework.  Tanger aims at creating a transactifying
-compiler that is independant of the STM system used. It works with the tinySTM
-~\cite{felber2008tinystm} library, but can easily be extended to use other STM
-libraries by writing a simple plugin.
+compiler that is independant of the STM system used. It works with the
+tinySTM~\cite{felber2008tinystm} library, but can easily be extended to use
+other STM libraries by writing a simple plugin.
 
-{\sc Tanger} is accompanied with the {\sc Tarifa} ~\cite{felber2007tanger}
+{\sc Tanger} is accompanied with the {\sc Tarifa}~\cite{felber2007tanger}
 tool, which transactifies compiled binaries, even without the sources, which
 might be a very important advantage when modifying legacy code.
 
 \subsubsection{Intel STM Compiler}
-Intel has published ~\cite{icc} an experimental STM compiler based on their industrial
+Intel has published~\cite{icc} an experimental STM compiler based on their industrial
 compiler ICC. It solved the above problem by adding some new function attributes
 to the language that tell the compiler which functions need to be transactified.
 The attribute {\tt tm\_callable} tells the compiler that a transactified version
@@ -202,7 +202,7 @@ of the function will be needed. This way only functions that are required inside
 transactions can be marked as {\tt tm\_callable} and be transactified.
 
 Although ICC uses a proprietery STM manager, Intel has published their
-ABI ~\cite{icc:abi} allowing for other STM managers to replace their own. This feature
+ABI~\cite{icc:abi} allowing for other STM managers to replace their own. This feature
 and its selective transactification ability were the main reasons why we
 preferred ICC.
 
@@ -210,7 +210,7 @@ In the latest version of Intel STM Compiler, support for abort and commit
 handlers was in fact added to the system, by registering a callback function
 from inside a transaction.
 
-An extension to the Gnu Compiler Collection (GCC) is being developed ~\cite{gcctm} to
+An extension to the Gnu Compiler Collection (GCC) is being developed~\cite{gcctm} to
 enable transactional memory support for GCC. It is intended to work with
 tinySTM, but being open source, other STM systems will probably be ported too.
 The syntax of the C/C++ language extensions is designed to be compatible with
@@ -271,7 +271,7 @@ Although this requires some changes to the code, the changes are limited to the
 call-site, and need not modify any of the called libraries.
 
 For example, the following critical section in the {\tt open\_entity} function
-(Figure ~\ref{code:original-open-entity}) is responsible for retrieving a page
+(Figure~\ref{code:original-open-entity}) is responsible for retrieving a page
 to fullfill a request from the server. It will increment the reference count on
 the cached page, and register a decrement function to be invoked upon completing
 the request. When we converted the critical section into a transaction, we
@@ -282,7 +282,7 @@ library, the Apache Portable Runtime library, thus breaking encapsulation.
 The semantics of requests and subrequest in apache guranteed the request
 couldn't be completed before the return of this function, therefore we could
 move the registration of the cleanup function out of the atomic section, as seen
-in Figure ~\ref{code:transactified-open-entity}. However, having a commit
+in Figure~\ref{code:transactified-open-entity}. However, having a commit
 handler construct in the language would make such conversions easier, with it we
 could register a commit handler from within the transaction, and have the STM
 system automatically invoke it once the transaction had committed.
@@ -365,7 +365,7 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key)
 \subsection{Commit Handlers}
 Commit and undo handlers are pieces of code that are scheduled by a transaction
 to run when the transaction will commit, or abort, respectively. This mechanism,
-was suggested in ~\cite{tm:commit-handlers}.  Commit handlers are described
+was suggested in~\cite{tm:commit-handlers}.  Commit handlers are described
 there as a mechanism that allows finalization of tasks, for instance, a
 transactional system call such as write to file might have its permanent side
 effects be executed in a commit handler. 
@@ -432,7 +432,7 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
 \label{code:closure-open-entity}
 \end{figure*}
 
-\subsection{Statistics and Profiling}
+\subsection{Statistics and Profiling}\label{sec:wishlist-statistics}
 Intel's STM manager collects statistics about the transactions being run, their
 size, abort rates, etc. Unfortunately however, it cannot work with a
 multiprocess application such as Apache. This limits the ability to investigate
@@ -441,10 +441,10 @@ process, or having only black box measurements of the system.
 
 \section{Evaluation}\label{sec:evaluation}
 \subsection{Methodology} 
-The transactified web server was evaluated using \emph{Siege} ~\cite{siege}, an
+The transactified web server was evaluated using \emph{Siege}~\cite{siege}, an
 HTTP load testing tool. The server was loaded with the set of UNIX man-pages - a
 set of small textual files typical of some web sites. Each page was served using
-the \emph{man2html} ~\cite{man2html} program, uncompressed and converted into
+the \emph{man2html}~\cite{man2html} program, uncompressed and converted into
 HTML, to make sure the serving of files requires enough computational resources
 to make the use of cache worthwhile.
 
@@ -476,21 +476,19 @@ experiments comparing the results of an Apache server running without a cache, a
 cached version without our transactional modifications, and the transactified
 version. 
 
+With low locality ($s=0.1$), the cache has almost no benefit, and the penalty of
+the STM increases with the number of processors, causing it to be less
+practical, as we learn from Figure~\ref{fig:request-throughput-0.1}
+and~\ref{fig:response-time-0.1}. 
+
 \begin{figure}
  \begin{center}
-  \includegraphics[width=8cm]{transaction-rate-single-host-1.png}
+  \includegraphics[width=8cm]{transaction-rate-client-server-0dot1.png}
  \end{center}
- \caption{Request throughput, Single host, $s = 1$: Medium locality.
-          With a single host, the additional latency of the network is
-          eliminated, achieving generally higher results than with two hosts. }
- \label{fig:transaction-rate-single-host-1}
-\end{figure}
-\begin{figure}
- \begin{center}
-  \includegraphics[width=8cm]{response-time-single-host-1.png}
- \end{center}
- \caption{Average response time, Single host, $s = 1$: Medium locality}
- \label{fig:response-time-single-host-1}
+ \caption{Request throughput, $s = 0.1$: Low locality.
+          The penalty of STM increases to the point it outweights the benefit of
+          using the cache.} 
+ \label{fig:request-throughput-0.1}
 \end{figure}
 \begin{figure}
  \begin{center}
@@ -498,6 +496,24 @@ version.
  \end{center}
  \caption{Average response time, $s = 0.1$: Low locality}
  \label{fig:response-time-0.1}
+\end{figure}
+
+With higher locality, such as $s=1$
+(Figure~\ref{fig:request-throughput-1},~\ref{fig:response-time-1}), the overhead
+of STM is still significant, but using the cache is now worthwhile, even with
+STM. It is worth noting that when running on a single machine, without the
+overhead of the network
+(Figure~\ref{fig:request-throughput-single-host-1},~\ref{fig:response-time-single-host-1}),
+the decrease in performance caused by STM was even less significant. [XX Why?
+XX]
+
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{transaction-rate-client-server-1.png}
+ \end{center}
+ \caption{Request throughput, $s = 1$: Medium locality.
+          The panelty of STM remains but the cache is an improvement.}
+ \label{fig:request-throughput-1}
 \end{figure}
 \begin{figure}
  \begin{center}
@@ -508,35 +524,49 @@ version.
 \end{figure}
 \begin{figure}
  \begin{center}
-  \includegraphics[width=8cm]{response-time-client-server-2.png}
+  \includegraphics[width=8cm]{transaction-rate-single-host-1.png}
  \end{center}
- \caption{Average response time, $s = 2$: High locality}
- \label{fig:response-time-2}
+ \caption{Request throughput, Single host, $s = 1$: Medium locality.
+          With a single host, the additional latency of the network is
+          eliminated, achieving generally higher results than with two hosts. }
+ \label{fig:request-throughput-single-host-1}
 \end{figure}
 \begin{figure}
  \begin{center}
-  \includegraphics[width=8cm]{transaction-rate-client-server-0dot1.png}
+  \includegraphics[width=8cm]{response-time-single-host-1.png}
  \end{center}
- \caption{Request throughput, $s = 0.1$: Low locality.
-          The penalty of STM increases to the point it outweights the benefit of
-          using the cache.} 
- \label{fig:transaction-rate-0.1}
+ \caption{Average response time, Single host, $s = 1$: Medium locality}
+ \label{fig:response-time-single-host-1}
 \end{figure}
-\begin{figure}
- \begin{center}
-  \includegraphics[width=8cm]{transaction-rate-client-server-1.png}
- \end{center}
- \caption{Request throughput, $s = 1$: Medium locality.
-          The panelty of STM remains but the cache is an improvement.}
- \label{fig:transaction-rate-1}
-\end{figure}
+
+With even higher locality ($s=2$), the contention on the cache is high even with
+small number of cores, and both versions show similar results.
+(Figure~\ref{fig:request-throughput-2},~\ref{fig:response-time-2}).
+
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{transaction-rate-client-server-2.png}
  \end{center}
  \caption{Request throughput, $s = 2$: High locality.}
- \label{fig:transaction-rate-2}
+ \label{fig:request-throughput-2}
 \end{figure}
+\begin{figure}
+ \begin{center}
+  \includegraphics[width=8cm]{response-time-client-server-2.png}
+ \end{center}
+ \caption{Average response time, $s = 2$: High locality}
+ \label{fig:response-time-2}
+\end{figure}
+
+As notes in Section~\ref{sec:wishlist-statistics}, Intel STM manager statistics
+mechanism was unable to work with multiple processes. In order to collect
+internal data about the transactions we ran Apache in a single process debugging
+mode. In Figure~\ref{fig:one-process-request-throughput}, the results show that
+STM achieves comparable results to the original version. In
+Figure~\ref{fig:one-process-abort-rate} the average number of aborts per second
+is shown, for the experiment with the transactified version. The increase in
+contention shown here explains the decrease in request throughput.
+
 \begin{figure}
  \begin{center}
   \includegraphics[width=8cm]{transaction-rate-single-process.png}
@@ -545,7 +575,7 @@ version.
           Without the additional processes apache fails to scale with high
           number of cores. STM suffers a decrease in performance but is
           comparable.} 
- \label{fig:one-process-transaction-rate}
+ \label{fig:one-process-request-throughput}
 \end{figure}
 \begin{figure}
  \begin{center}
@@ -554,7 +584,7 @@ version.
  \caption{Abort Rate, $s = 1$: Medium locality, a single process.
           The abort rate increase with the number of cores might explain the 
           decrease in transaction rate.}
- \label{fig:abort-rate}
+ \label{fig:one-process-abort-rate}
 \end{figure}
 
 \section{Conclusions}\label{sec:conclusions}
