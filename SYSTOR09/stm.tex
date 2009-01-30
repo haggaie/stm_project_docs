@@ -67,7 +67,7 @@ intricacy of commit blocks. We also stumbled across weaknesses of
 existing software transactional memory (STM) toolkits, leading us
 to identify desirable features they are currently lacking.
 Finally, we present performance results from running
-Apache on a 32-core machine, showing that, surprisingly, there are scenarios
+Apache on a 32-core machine, showing that, there are scenarios
 where the performance of the STM-based version is close to that of the
 lock-based version.  These results suggest that there are applications for which
 the overhead of using a software-only implementation of transactional memory is
@@ -80,66 +80,110 @@ insignificant.
 Measurement, Performance, Experimentation
 
 \keywords
-Sortware Transactional Memory
+Software Transactional Memory
 
 \section{Introduction}
-The vast shift to multicore machines in the last couple of years indicates the 
-emerging of the multicore era. In this context, Transactional Memory and Software Transactional 
-Memory (STM) are of the primary tools targeted at allowing programmers to easily harness the 
-parallelism of future multi-core machines and to extract the performance promise these systems 
-endure. 
 
-One of the principal challenges all Transactional Memory system confront (beside 
-delivering performance) is the ability to handle large-scale commercial applications and the 
-ability to easily export  large legacy code. As TM systems are maturing, the aspect of 
-convertibility and completeness are becoming acute in order to allow TM to shift from concept 
-into full-fledged commercial tool. In this work we try via a design example to answer how 
-far from achieving the goal we are at. 
+The vast shift to multi-core machines in recent years 
+creates a major challenge for software developers, 
+who must learn how to exploit the parallelism that such
+architectures can offer.
+In this context, \emph{Transactional Memory (TM)} is one of the leading
+paradigms targeted at allowing programmers to easily harness the 
+parallelism of future multi-core machines and to extract the 
+performance promise these systems can offer. 
+Since hardware transactional memory implementations are not
+yet in the market,  \emph{Software Transactional Memory (STM)} tools
+offer a viable alternative in the interim. 
 
-To date, transactional memory was mostly employed within the niche of complex
+One of the principal challenges that TM systems confront, (besides 
+delivering performance), is the ability to handle large-scale commercial applications.
+Developers that wish to employ TM, face the challenge of 
+applying it to large legacy code. As TM systems are maturing, these aspects of 
+convertibility and completeness are becoming critical in order to allow TM to shift from 
+a promising concept to a full-fledged commercial tool. In this work, we try, via a design 
+example, to answer how far we are from achieving these goals. 
+
+To date, TM was mostly employed within the niche of complex
 concurrent data structures, such as red-black trees and skip lists
 \cite{herlihy:DSTM, fraser:practical:thesis:2003}, and isolated scientific
-algorithms (such as STAMP~\cite{caominh:stamp:iiswc:2008}).
-Moreover, it was mostly used to implement benchmarks explicitly with
-transactional memory from scratch. Additionally, we have seen benchmarks such as
+algorithms (such as STAMP~\cite{caominh:stamp:iiswc:2008});
+it was additionally used for  benchmarks such as
 STMBench7~\cite{STMBench7}, which measures operations on a complex yet still
 artificial object graph.
+Moreover, Transactional Memory was mostly used thus far in benchmarks that 
+were implemented explicitly with TM from the outset. 
 
-In this paper, we use transactional memory
+In this paper, we use Transactional Memory
 for the first time in the context of large-scale industrial software, which,
 moreover, does not pertain to any of the typical niches of transactional memory
 benchmarks. Furthermore, we convert legacy code, which used lock-based
 synchronization, to work with transactional memory, rather than write the
 benchmark from scratch. We refer to this conversion process as
-\emph{transactification}.
+\emph{transactification}. Specifically, we transactify the Apache 
+web server. Since Apache is written in C, we needed to employ C-based
+STM toolkits. We next recognized that it would not be feasible to
+use \emph{library-based} STM tools, as this  
+would entail changing all reads and writes to global variables in the code.
+Instead, we opted for \emph{compiler-based} STMs. 
+We experimented with two such tools, 
+{\sc Tanger}~\cite{felber2007tanger} and Intel's STM Compiler~\cite{icc}.
+Section~\ref{sec:background} provides background on Apache
+and the two STM tools we attempted to use in this endeavor. 
 
-Our goal for this exercise is twofold. First, we wanted to examine whether the transactional 
+Our goal in this exercise is twofold. First, we wanted to examine whether the transactional 
 memory paradigm is broadly applicable, outside its traditional niches, in contexts where a 
-high level of parallelism is already obtained using lock-based synchronization. [XX Can we 
-quote something somebody said before on where it should not work?? XX]. 
-
+high level of parallelism is already obtained using lock-based synchronization. 
+%[XX Can we 
+%quote something somebody said before on where it should not work?? XX]. 
+%
 Second, as transactional memory is being touted as the panacea for the limited parallelism 
 of coarse-grained locks, and since coarse-grained locks that limit parallelism are widely used 
 in legacy code, one can anticipate a growing need for transactification of legacy software. 
 We sought to learn how painful such a process can be, and what can be done in order to 
 facilitate it.
 
-The rest of the paper is organized as follows: After a brief review of the
-apache application and the STM tools used in our work
-(Section~\ref{sec:background}), we describe in details the transactification
+In the course of this project, we learned some valuable lessons.
+For example, we have seen that tools vary in the features they are able
+to support, which has significant impact on their usability in 
+such a large-scale projects. We have further learned that in such a large
+system, it is more realistic to transactify only pertinent parts of the code,
+while most of the code is better left untouched. Finally, we have found
+that there is a vital need to sometimes defer irrevocable actions to
+the end of a transaction; this feature is provided by a language construct called 
+a \emph{commit block}. In Section~\ref{sec:transactification}, 
+we describe in detail our transactification
 process, including the hurdles we have encountered and the means used to
-overcome them (Section~\ref{sec:transactification}) including our wish-list
-(Section~\ref{sec:wishlist}) for future STM versions. We then study (in
-Section~\ref{sec:evaluation}) the performance of the transactified version,
-showing that the Transactified version is competitive to the legacy code in
-performance. This demonstrates that for some applications, the performance
-penalty of STM may not be as severe as usually assumed, and will hence justify
-the porting to TM with all the benefits it endures. Finally, we summarizes (in
-Section~\ref{sec:conclusions}) the lesson learned in the transactification
-process.
+overcome them.
 
-\section{Background: Software and Tools}\label{sec:background}
+Though we finally managed to overcome the hurdles and create working transactified 
+code, the process left us somewhat unsatisfied with the current state of the art. 
+In Section~\ref{sec:wishlist}, we compile a \emph{wish list} of features 
+that would have been very helpful in this process, had they been provided
+by TM toolkits; for the consideration of developers of future STM versions. 
+
+In Section~\ref{sec:evaluation} we study the performance of the transactified 
+version of Apache on a 32-core machine. 
+Note that since the legacy Apache code is already 
+tuned to work well with multiple threads and multiple processes, 
+and since we use software-only TM solutions, which were not optimized for this 
+application, one could expect the transactified version to be significantly
+slower than the original.
+Somewhat surprisingly, we show that this is not the case, and the 
+transactified 
+version's performance is competitive to that of the lock-based legacy code. 
+As future TMs are expected to incorporate hardware support, and also 
+to be better optimized for a range of application, our results 
+suggests that in the future, porting applications to TM may be valuable.
+
+Section~\ref{sec:conclusions}) summarizes the lesson we learned in the 
+transactification process.
+
+\section{Background: Software and Tools}
+\label{sec:background}
+
 \subsection{Apache}\label{sec:apache}
+
 Apache~\cite{apache} HTTP server is a popular web server application written in
 C. It supports working on multiprocessor machines with several multi-processing
 modules (MPMs) each offering a different strategy for handling requests and
@@ -163,7 +207,7 @@ where transactional memory can be used. One such place is Apache's memory cache
 implemented by the {\tt mod\_mem\_cache} module. This module enables the workers
 of each process to share a cache of recently served requests. A new request can
 be served from the memory cache, and save the time required to access the disk
-and generate the requested page. Since the cache is shared between multiple
+and generate the requested page. Since the cache is shared among multiple
 threads, it is synchronized by a single lock, therefore a good candidate for
 converting into transactional memory.
 
@@ -184,6 +228,7 @@ of two algorithms: LRU, removing the least recently used entries first, and GDSF
 cache miss, and the entry size.
 
 \subsection{C STM Systems}
+
 C and C++ STM systems divide into two kinds: Library based and compiler based.
 Library based STMs \cite{TL2,felber2008tinystm,RSTM} are built as a C library.
 Every transaction begins with a call into the library, and commits by another
@@ -191,14 +236,16 @@ call. All reads and writes to global variables must be done through special
 library functions when in a transaction. This requires a great amount of work
 for converting an application to use STM. Not only accesses to global memory in
 the function that started the transaction must be converted, but also any access
-from any function being called from this function. 
+from any function being called from this function. We therefore ruled out
+this approach. 
 
 In contrast, compiler-based STM
 \cite{felber2007tanger,icc,gcctm,baek:opentm:pact:2007} use a specialized
 compiler, which has extended syntax for transactional memory atomic blocks. The
 compiler can then automatically convert memory accesses inside transactions
 into calls to the underlying library. The term \emph{transactification}
-sometimes refer to this process.
+sometimes refer to this process. We experimented with two compiler-based
+STMs, which we now describe. 
 
 \subsubsection{\sc Tanger}
 The {\sc Tanger}~\cite{felber2007tanger} transctifying compiler is an
@@ -209,15 +256,17 @@ tinySTM~\cite{felber2008tinystm} library, but can easily be extended to use
 other STM libraries by writing a simple plugin.
 
 {\sc Tanger} is accompanied with the {\sc Tarifa}~\cite{felber2007tanger}
-tool, which transactifies compiled binaries, even without the sources, which
-might be a very important advantage when modifying legacy code.
+tool, which transactifies compiled binaries, even without the sources. This
+feature is a very important advantage when modifying legacy code, where often
+not all the source code is available, as the code uses legacy libraries.
 
 \subsubsection{Intel STM Compiler}
+
 Intel has published~\cite{icc} an experimental STM compiler based on their industrial
-compiler ICC. It solved the above problem by adding some new function attributes
-to the language that tell the compiler which functions need to be transactified.
+compiler ICC. It solves the missing code problem by adding some new function attributes
+to the language in order to tell the compiler which functions need to be transactified.
 The attribute {\tt tm\_callable} tells the compiler that a transactified version
-of the function will be needed. This way only functions that are required inside
+of the function will be needed. This way, only functions that are required inside
 transactions can be marked as {\tt tm\_callable} and be transactified.
 
 Although ICC uses a proprietery STM manager, Intel has published their
@@ -226,7 +275,7 @@ and its selective transactification ability were the main reasons why we
 preferred ICC.
 
 In the latest version of Intel STM Compiler, support for abort and commit
-handlers was in fact added to the system, by registering a callback function
+handlers was also added to the system, by registering a callback function
 from inside a transaction.
 
 An extension to the Gnu Compiler Collection (GCC) is being developed~\cite{gcctm} to
