@@ -263,13 +263,7 @@ not all the source code is available, as the code uses legacy libraries.
 \subsubsection{Intel STM Compiler}
 
 Intel has published~\cite{icc} an experimental STM compiler based on their industrial
-compiler ICC. It solves the missing code problem by adding some new function attributes
-to the language in order to tell the compiler which functions need to be transactified.
-The attribute {\tt tm\_callable} tells the compiler that a transactified version
-of the function will be needed. This way, only functions that are required inside
-transactions can be marked as {\tt tm\_callable} and be transactified.
-
-Although ICC uses a proprietary STM manager, Intel has published their
+compiler ICC. Although ICC uses a proprietary STM manager, Intel has published their
 ABI~\cite{icc:abi} allowing for other STM managers to replace their own. This feature
 and its selective transactification ability were the main reasons why we
 preferred ICC.
@@ -308,7 +302,13 @@ to fail, where in fact the code could have been transactified without any error
 by skipping these functions.
 
 This drawback was the main reason why we eventually chose to use Intel's STM
-Compiler. Lately, a new release of {\sc Tanger} was announced, one in which the developer
+Compiler. It solves the unneeded transactification problem by adding some new function attributes
+to the language in order to tell the compiler which functions need to be transactified.
+The attribute {\tt tm\_callable} tells the compiler that a transactified version
+of the function will be needed. This way, only functions that are required inside
+transactions can be marked as {\tt tm\_callable} and be transactified.
+
+Lately, a new release of {\sc Tanger} was announced, one in which the developer
 can annotate which functions should be transactified. However, we did not get a
 chance to try it.
 
