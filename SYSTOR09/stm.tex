@@ -306,6 +306,7 @@ could register a commit handler from within the transaction, and have the STM
 system automatically invoke it once the transaction had committed.
 
 \begin{figure*}
+\lstset{emph={apr_thread_mutex_lock, apr_thread_mutex_unlock, apr_pool_cleanup_register}, emphstyle=\bf}
 \begin{lstlisting}
 static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
   ...
@@ -342,6 +343,7 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
 \end{figure*}
 
 \begin{figure*}
+\lstset{emph={__tm_atomic, apr_pool_cleanup_register}, emphstyle=\bf}
 \begin{lstlisting}
 static int open_entity(cache_handle_t *h, request_rec *r, const char *key)
 {
@@ -414,6 +416,7 @@ implementing those in a statically-typed language without garbage collection
 such as C.
 
 \begin{figure*}
+\lstset{emph={__tm_atomic, apr_pool_cleanup_register, on_commit}, emphstyle=\bf}
 \begin{lstlisting}
 static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
   ...
