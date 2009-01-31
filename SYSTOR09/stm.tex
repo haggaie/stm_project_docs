@@ -511,6 +511,13 @@ keyword uses variables such as {\tt rmain} and {\tt obj} from its surrounding
 block, that must be captured until it is executed later when the transaction
 commits.
 
+Having closures allows us to easily defer execution of code until after the
+transaction commits, with minimal modification to our code. Instead of creating
+a new function for each piece of code being deferred, and possible create new
+data types to hold the data from inside the transaction that each such function
+required, with closures we could just change the piece of code being deferred
+into a closure, and let the implementation handle these tasks.
+
 \begin{figure*}
 \lstset{emph={__tm_atomic, apr_pool_cleanup_register, on_commit}, emphstyle=\bf}
 \begin{lstlisting}
