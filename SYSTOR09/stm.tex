@@ -551,7 +551,7 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
   ...
 }
 \end{lstlisting}
-\caption{{\tt open\_entity} function with desired commit handler closure syntax}
+\caption{{\tt open\_entity} function with desired commit handler closure syntax.}
 \label{code:closure-open-entity}
 \end{figure*}
 
@@ -574,50 +574,60 @@ reset to its original value in case the transaction aborted. Abort handlers
 allow us to track these measurements ourselves, but since they were only
 added in Intel's latest compiler, we have not implemented such measurements yet.
 
-\section{Evaluation}\label{sec:evaluation}
+\section{Performance Evaluation}\label{sec:evaluation}
 \subsection{Methodology} 
-The transactified web server was evaluated using \emph{Siege} \cite{siege}, an
-HTTP load testing tool. The server was loaded with the set of UNIX man-pages - a
-set of small textual files typical of some web sites. Each page was served using
-the \emph{man2html} program, uncompressed and converted into HTML, to make sure
+
+We evaluate the transactified web server  using \emph{Siege} \cite{siege}, an
+HTTP load testing tool. The server is loaded with the set of UNIX man-pages -- a
+set of small textual files typical of some web sites. Each page is served using
+the \emph{man2html} program, uncompressed and converted into HTML.
+Thus,  
 the serving of files requires enough computational resources to make the use of
-cache worthwhile.
+caching worthwhile.
 
 The man2html program is a Common Gateway Interface (CGI) program that serves
-unix manual (man) pages on Internet sites. The pages are usually stores
+unix manual (man) pages on Internet sites. The pages are usually stored
 compressed in gzip format, and formatted using the troff format. The program
 receives a request for a man page from the web server, uncompresses the required
-file and converts it to HTML. As every CGI program it outputs the result with
+file, and converts it to HTML. As every CGI program, it outputs the result with
 relevant HTTP headers.
 
-The default caching policy of apache forbids caching dynamically generated pages
+The default caching policy of Apache forbids caching dynamically generated pages
 such as those of man2html, unless the HTTP headers of the resulting page clearly
 specify otherwise. To make caching of the man2html pages possible, we modified
 man2html to output such headers, specifying the output can be cached for one
 hour.
 
-The pages were requested randomly according to Zipf distribution, whose
-parameter $s$ determines how frequently the most popular pages were visited,
-thus controlling the amount of locality in the requests.
+In each experiment, the pages are requested randomly according to a Zipf 
+distribution with some parameter $s$, which
+determines how frequently the most popular pages are visited,
+thus controlling the level of locality in the requests.
+The higher the value of $s$ is, the more locality there is in the 
+workload.
 
-The experiments were done with two computers connected with Gigabit Ethernet.
-Both machines were an 8 processors SMP of quad core 2.3GHz AMD Opterons 
-with 126GB of RAM, with a total of 32 cores. 
+The experiments run on two computers connected by  Gigabit Ethernet.
+Each of the machines is an 8-processors SMP, with quad core 2.3GHz AMD Opteron
+processors (for a total of 32 cores), and 126GB of RAM. 
 
 \subsection{Results} 
-We compared the average latency and request throughput when running on different
-number of cores, and with different  values. For every graph there are three
-experiments comparing the results of an Apache server running without a cache, a
+
+We compare the average latency and request throughput when running on different
+numbers of cores, and with different  values of $s$. Each graph presents 
+results from three
+experiments, comparing the performance of an Apache server running without a cache, a
 cached version without our transactional modifications, and the transactified
 version. 
 
-With low locality ($s=0.1$), the cache has almost no benefit, and the penalty of
+As expected, with low locality ($s=0.1$), the cache yields almost no benefit.
+Moreover, the penalty of
 the STM increases with the number of processors, causing it to be less
-practical, as we learn from Figure~\ref{fig:request-throughput-0.1}
-and~\ref{fig:response-time-0.1}. Almost all of the requests results in cache
-misses, therefore causing more work inside transactions, and increasing the
-relative cost of using STM. However, this situation is not a typical use of
-Apache's cache.
+practical, as we see in Figures~\ref{fig:request-throughput-0.1}
+and~\ref{fig:response-time-0.1}. This degradation of the STM-based version
+occurs since almost all of the requests result in cache
+misses, thus causing more work to be done within transactions, 
+and increasing contention.  However, this workload is not representative;
+typical Apache workloads exhibit more locality, and hence benefit from
+the cache.
 
 \begin{figure*}
  \centering
@@ -630,14 +640,15 @@ Apache's cache.
   \includegraphics[width=8cm]{response-time-client-server-0dot1.png}
   \label{fig:response-time-0.1}
  }
- \caption{$s = 0.1$: Low locality. The penalty of STM increases to the point it
-    outweighs the benefit of using the cache.}
+ \caption{Very low locality workload ($s = 0.1$). The cache is not effective,
+ and the penalty of using STM is high.}
 \end{figure*}
 
-With higher locality, such as $s=1$
-(Figure~\ref{fig:request-throughput-1},~\ref{fig:response-time-1}), the overhead
-of STM is still significant, but using the cache is now worthwhile, even with
-STM. 
+With more representative locality, such as $s=1$, 
+(Figures~\ref{fig:request-throughput-1} and ~\ref{fig:response-time-1}), 
+caching is beneficial. The overhead
+of STM is still significant, but its performance is better than
+than when not using a cache at all. 
 
 \begin{figure*}
  \centering
@@ -650,19 +661,36 @@ STM.
   \includegraphics[width=8cm]{response-time-client-server-1.png}
   \label{fig:response-time-1}
  }
- \caption{$s = 1$: Medium locality. The penalty of STM remains but the cache is an improvement.}
+ \caption{Medium locality workload ($s = 1$). 
+ STM incurs a performance penalty, but the cache provides an improvement.}
 \end{figure*}
 
 With even higher locality ($s=2$), the contention on the cache is high even with
-small number of cores, and both versions show similar results.
-(Figure~\ref{fig:request-throughput-2},~\ref{fig:response-time-2}).
+small number of cores. The results of the high locality experiments are shown
+in Figures~\ref{fig:request-throughput-2} and~\ref{fig:response-time-2}.
+In this case, caching provides major performance
+benefits, increasing throughput by a factor of four. Here, the two 
+cache-based versions exhibit close results, with a small yet consistent
+advantage to the STM version.
 
-It is worth noting that in all the tests above there is a minimum number of
-cores above which the transactified version performs as good as or better than
-the original version. For some reason the lock based version's performance also
-decrease when using a large number of cores, and while this is also true for the
-transactified version, it still remains with a little higher throughput than the
-original.
+In all the experiments described above, performance begins to decrease
+beyond a certain number of cores. This number is becomes smaller as 
+the locality increases, albeit it occurs at a higher throughput when
+there is more locality. This occurs due to the increased competition
+among the cores over the shared resources. In particular, in the 
+transactified version, the abort rate rises with the number of cores,
+as we show below. 
+
+We further note than in all workloads, there is 
+a number of cores for which the transactified version performs 
+better than the original version. We believe that this occurs 
+because the atomic blocks in the transactified version are 
+shorter than those in the lock-based version, thanks to our
+choice to defer of certain actions to occur after the commit,
+as explained in Section~\ref{sec:transactification} above.
+Thus, the period of contention among threads is shorter,
+which becomes more significant as the number of concurrently
+active threads rises.
 
 \begin{figure*}
  \centering
@@ -675,59 +703,83 @@ original.
   \includegraphics[width=8cm]{response-time-client-server-2.png}
   \label{fig:response-time-2}
  }
- \caption{$s = 2$: High locality}
+ \caption{High locality workload ($s = 2$). The cache is vital, and 
+ the STM version works best.}
 \end{figure*}
 
 In order to investigate this decrease in throughput, we wanted to show the
-transaction abort rate for these experiments. As notes in
-Section~\ref{sec:wishlist-statistics}, Intel STM manager statistics mechanism
-was unable to work with multiple processes. In order to collect
-internal data about the transactions we ran Apache in a single process debugging
-mode. Figure~\ref{fig:one-process-abort-rate} shows the average number of aborts
-per second is shown, for the experiment with the transactified version, while
-Figure~\ref{fig:one-process-request-throughput}, shows the throughput achieved by
-this experiment, compared with running the no-cache and no-transactions versions
-under the same settings. The increase in contention shown in
-Figure~\ref{fig:one-process-abort-rate} explains the decrease in request
-throughput, for the transactional version.
+transaction abort rate for these experiments. Unfortunately, as noted in
+Section~\ref{sec:wishlist-statistics}, Intel STM's statistics mechanism
+is unable to work with multiple processes. We therefore ran an additional
+experiment, with Apache in a single process debugging mode, in order to collect
+internal data about the transactions. 
+
+We ran this single-process experiment with the medium locality workload,
+that is, with $s=1$. Surprisingly, we see
+in Figure~\ref{fig:one-process-request-throughput} that the
+throughput of both the original and the STM version improve in this mode.
+This suggests that Apache's multi-process mode is somehow not supported
+well on our machines. Nevertheless, as before, neither version is able to 
+benefit from the maximum allowed parallelism of the machine. 
+
+Figure~\ref{fig:one-process-abort-rate} shows the average number of aborts
+per second for the experiment with the transactified version. 
+The increase in the abort rate explains the decrease in the request
+throughput. At first, the abort rate increases gradually, 
+and the benefit of having more cores available outweighs it.
+But after about eight cores, the increase in the abort rate dominates,
+so that there is little benefit in using more cores. 
 
 \begin{figure*}
  \centering
- \subfigure[Request throughput. Without the additional processes apache fails
-            to scale with high number of cores. STM suffers a decrease in
-            performance but is comparable.]{
+ \subfigure[Request throughput]{
   \includegraphics[width=8cm]{transaction-rate-single-process.png}
   \label{fig:one-process-request-throughput}
  }
  \hfill
- \subfigure[Abort rate. The abort rate increase with the number of cores might
-            explain the decrease in transaction rate.]{
+ \subfigure[Abort rate]{
   \includegraphics[width=8cm]{abort-rate.png}
   \label{fig:one-process-abort-rate}
  }
- \caption{$s = 1$: Medium locality, a single process.}
+ \caption{Medium locality workload ($s = 1$), Apache in single-process mode.
+ The abort rate increases with the number of cores, which explains the decline 
+ in the transaction rate.}
 \end{figure*}
 
 \section{Conclusions}\label{sec:conclusions}
+
+We have reported on our experience in converting the Apache web 
+server to use the TM paradigm instead of lock-based synchronization,
+and the lessons we learned along the way. Our conclusions include:
+
 \begin{itemize}
-  \item Out of 340,000 lines of code in the Apache Web server, the cache module
-is comprised of only 6651 lines of code, of which only 273 lines were changed by
-our modifications. This shows the importance of being able to modify only
-encapsulated sections of the code, and interoperating with legacy code that
-still uses locks.  
+
+\item
+In order to cope with the scale of the software, we had to restrict
+our attention to a small part of it. 
+Out of 340,000 lines of code in the Apache web server, the cache module
+is comprised of only 6651 lines of code, of which we modified only 273. 
+This highlights the importance of being able to modify only
+encapsulated sections of the code, and inter-operating with legacy software,
+which might still use locks.  Moreover, legacy systems often interact
+with software libraries whose source code is unavailable. 
+
   \item Having commit handlers in the STM system is not only needed for creating
 efficient open transactions, but can also aid the process of transactifying
 legacy code.
-  \item There is great importance in working on real-world applications as they
+
+  \item It is important to work on real-world applications, as they
 may reveal challenges resulting from engineering problems and not only
 algorithmic and theoretical problems.
-\end{itemize}
-There are many STM systems currently available, and one immediate direction
-would be to compare them using this benchmark. This would require writing
-plugins for any such system to match Intel's TM ABI. 
 
-In addition, there are other applications that might be interesting as
-transactional memory applications, following the methods we used.
+\end{itemize}
+
+We next indicate two future directions that may follow on our work. 
+First, there are many STM systems currently available, and one immediate direction
+would be to compare them using this new TM benchmark. Doing so would require writing
+plugins for existing TM system to match Intel's TM ABI. 
+A second direction is to transactify additional 
+legacy applications, following the methods we used.
 
 %\appendix
 %\section{Appendix Title}
