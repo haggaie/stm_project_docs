@@ -63,7 +63,7 @@ aware of any previous efforts to transactify legacy software of such
 a large scale. Along the way, we learned some valuable lessons about
 which tools one should use, which parts of the code one should
 transactify and which are better left untouched, as well as on the
-intricacy of commit blocks. We also stumbled across weaknesses of
+intricacy of commit handlers. We also stumbled across weaknesses of
 existing software transactional memory (STM) toolkits, leading us
 to identify desirable features they are currently lacking.
 Finally, we present performance results from running
@@ -151,7 +151,7 @@ system, it is more realistic to transactify only pertinent parts of the code,
 while most of the code is better left untouched. Finally, we have found
 that there is a vital need to sometimes defer irrevocable actions to
 the end of a transaction; this feature is provided by a language construct called 
-a \emph{commit block}. In Section~\ref{sec:transactification}, 
+a \emph{commit handlers}. In Section~\ref{sec:transactification}, 
 we describe in detail our transactification
 process, including the hurdles we have encountered and the means used to
 overcome them.
@@ -275,7 +275,7 @@ from inside a transaction.
 
 An extension to the Gnu Compiler Collection (GCC) is being developed~\cite{gcctm} to
 enable transactional memory support for GCC. It is intended to work with
-tinySTM, but being open source, other STM systems will probably be ported too.
+TinySTM, but being open source, other STM systems will probably be ported too.
 The syntax of the C/C++ language extensions is designed to be compatible with
 ICC. This means that applications converted for ICC will probably be compilable
 under GCC with this extension, without much modification.
@@ -415,7 +415,7 @@ would first remove its pointer from the cache, and then decrease its reference
 count in free its memory if necessary. In this case we would like to do all the
 removals inside the transaction, and all the reference decrements and memory
 cleanup oustide of the transaction. In order to deal with such scenarios, it is
-desirable to have language support for commit blocks, as explained in the next
+desirable to have language support for commit handlers, as explained in the next
 section. 
 
 \begin{figure*}
@@ -436,7 +436,7 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key)
     }
   }
 
-  /* Register the object for removal from the cache after cleanup */
+  /* Register the object for updating after cleanup */
   if (obj && obj->complete) {
     request_rec *rmain=r, *rtmp;
     /* If this is a subrequest, register the cleanup against the main
@@ -548,7 +548,7 @@ and when called refer to variables that existed where it was defined. In
 Figure~\ref{code:closure-open-entity}, we give an example of the desired syntax
 of such a commit handler closure. The block of code after the {\tt on_commit}
 keyword uses variables such as {\tt rmain} and {\tt obj} from its surrounding
-block, that must be captured until it is executed later when the transaction
+block that must be captured until it is executed later when the transaction
 commits.
 
 Having closures allows us to easily defer execution of code until after the
@@ -610,7 +610,9 @@ workload.
 
 The experiments run on two computers connected by  Gigabit Ethernet.
 Each of the machines is an 8-processors SMP, with quad core 2.3GHz AMD Opteron
-processors (for a total of 32 cores), and 126GB of RAM. 
+processors (for a total of 32 cores), and 126GB of RAM. One of the machines was
+used as a server running Apache, and the other served as a client, running
+Siege.
 
 \subsection{Results} 
 
@@ -662,11 +664,10 @@ the cache.
  STM incurs a performance penalty, but the cache provides an improvement.}
 \end{figure*}
 
-With more representative locality, such as $s=1$, 
-(Figures~\ref{fig:request-throughput-1} and ~\ref{fig:response-time-1}), 
-caching is beneficial. The overhead
-of STM is still significant, but its performance is better than
-than when not using a cache at all. 
+With more representative locality, such as $s=1$,
+(Figures~\ref{fig:request-throughput-1} and ~\ref{fig:response-time-1}), caching
+is beneficial. The overhead of STM is still significant, but its performance is
+better than when not using a cache at all. 
 
 \begin{figure*}
  \centering
@@ -692,14 +693,14 @@ cache-based versions exhibit close results, with a small yet consistent
 advantage to the STM version.
 
 In all the experiments described above, performance begins to decrease
-beyond a certain number of cores. This number is becomes smaller as 
+beyond a certain number of cores. This number becomes smaller as 
 the locality increases, albeit it occurs at a higher throughput when
 there is more locality. This occurs due to the increased competition
 among the cores over the shared resources. In particular, in the 
 transactified version, the abort rate rises with the number of cores,
 as we show below. 
 
-We further note than in all workloads, there is 
+We further note that in all workloads, there is 
 a number of cores for which the transactified version performs 
 better than the original version. We believe that this occurs 
 because the atomic blocks in the transactified version are 
@@ -742,7 +743,7 @@ well on our machines. Nevertheless, as before, neither version is able to
 benefit from the maximum allowed parallelism of the machine. 
 
 Figure~\ref{fig:one-process-abort-rate} shows the average number of aborts
-per second for the experiment with the transactified version. 
+per transaction for the experiment with the transactified version. 
 The increase in the abort rate explains the decrease in the request
 throughput. At first, the abort rate increases gradually, 
 and the benefit of having more cores available outweighs it.
