@@ -369,9 +369,14 @@ seen in Figure~\ref{code:transactified-open-entity}. In this example,
 the registration occurred at the end of the atomic block, so 
 we did not have to move it in order to take it out of the block;
 we simply ended the atomic block earlier. Nevertheless, in other cases,
-such actions occur in the middle of an atomic block. In order to
-deal with such scenarios, it is desirable to have language support for 
-commit blocks, as explained in the next section. 
+such actions occur in the middle of an atomic block. For example, in a function
+that cleans up multiple objects from the cache, for of the objects removed it
+would first remove its pointer from the cache, and then decrease its reference
+count in free its memory if necessary. In this case we would like to do all the
+removals inside the transaction, and all the reference decrements and memory
+cleanup oustide of the transaction. In order to deal with such scenarios, it is
+desirable to have language support for commit blocks, as explained in the next
+section. 
 
 \begin{figure*}
 \lstset{emph={apr_thread_mutex_lock, apr_thread_mutex_unlock, apr_pool_cleanup_register}, emphstyle=\bf}
@@ -474,6 +479,12 @@ example shown in Figure~\ref{code:original-open-entity},
 the call to {\tt apr\_pool\_cleanup\_register} could have been
 converted into a call registering this function as a commit handler. 
 
+Intel STM Compiler support abort and commit handlers in its latest addition.
+Handlers are written as functions with a single {\tt void~*} argument, and
+registered by calling the API functions {\tt \_ITM\_add\-User\-Commit\-Action} or
+{\tt \_ITM\_add\-User\-Undo\-Action}. This feature was only recently added, and we have
+not used it in our experiments. {\sc Tanger} currently does not support
+registering such handlers.
 
 \section{Wish List}\label{sec:wishlist} 
 
@@ -489,9 +500,16 @@ Handlers must be given as a pointer to function of a specific signature, so a
 developer trying to move a piece of code out of an atomic block, would still
 need to write a new function. It would be nice to have a language construct that
 defines a new commit handler right where it is being registered, however this
-requires the language to support closures, and of course there are many problems
-implementing those in a statically-typed language without garbage collection
-such as C.
+requires the language to support closures. 
+
+A closure is a function that has bounded variables from the environment where it
+was defined. It is intended to be passed along similarly to a function pointer,
+and when called refer to variables that existed where it was defined. In
+Figure~\ref{code:closure-open-entity}, we give an example of the desired syntax
+of such a commit handler closure. The block of code after the {\tt on_commit}
+keyword uses variables such as {\tt rmain} and {\tt obj} from its surrounding
+block, that must be captured until it is executed later when the transaction
+commits.
 
 \begin{figure*}
 \lstset{emph={__tm_atomic, apr_pool_cleanup_register, on_commit}, emphstyle=\bf}
@@ -526,9 +544,13 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
   ...
 }
 \end{lstlisting}
-\caption{{\tt open\_entity} function with a commit handler closure}
+\caption{{\tt open\_entity} function with desired commit handler closure syntax}
 \label{code:closure-open-entity}
 \end{figure*}
+
+Of course there are many problems implementing closures in a language without
+garbage collection such as C, especially since there is no guarentee that the
+pointers taken by the closure will not be invalidated before the closure is run.
 
 % \clearpage
 
@@ -538,6 +560,12 @@ size, abort rates, etc. Unfortunately however, it cannot work with a
 multiprocess application such as Apache. This limits the ability to investigate
 the performance of converted applications to only limited runs with only one
 process, or having only black box measurements of the system.
+
+Collecting these statistics ourselves was not possible without abort handlers,
+of course, because any statistics data a transaction might modify would be
+reset to its original value in case the transaction aborted. Abort handlers
+allow us to track these measurements ourselves, but since they were only
+added in Intel's latest compiler, we have not implemented such measurements yet.
 
 \section{Evaluation}\label{sec:evaluation}
 \subsection{Methodology} 
