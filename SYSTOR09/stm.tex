@@ -331,6 +331,43 @@ that collisions with these accesses will be detected. Overall we only changed
 functions such as the atomic instruction wrappers.
 
 \subsection{Defining atomic blocks}
+\begin{figure*}
+\lstset{emph={apr_thread_mutex_lock, apr_thread_mutex_unlock, apr_pool_cleanup_register}, emphstyle=\bf}
+\begin{lstlisting}
+static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
+  ...
+  if (sconf->lock) apr_thread_mutex_lock(sconf->lock);
+
+  obj = (cache_object_t *) cache_find(sconf->cache_cache, key);
+  if (obj) {
+    if (obj->complete) {
+      request_rec *rmain=r, *rtmp;
+      apr_atomic_inc32(&obj->refcount);
+      /* cache is worried about overall counts, not 'open' ones */
+      cache_update(sconf->cache_cache, obj);
+
+      /* If this is a subrequest, register the cleanup against the main
+       * request.  This will prevent the cache object from being cleaned up
+       * from under the request after the subrequest is destroyed. */
+      rtmp = r;
+      while (rtmp) {
+        rmain = rtmp;
+        rtmp = rmain->main;
+      }
+      apr_pool_cleanup_register(rmain->pool, obj, decrement_refcount, 
+        apr_pool_cleanup_null);
+    }
+    else obj = NULL;
+  }
+
+  if (sconf->lock) apr_thread_mutex_unlock(sconf->lock);
+  ...
+}
+\end{lstlisting}
+\caption{Original {\tt open\_entity} function.}
+\label{code:original-open-entity}
+\end{figure*}
+
 Following the conversion, some transactions contained code that pertained to
 the transaction, but did not necessarily need to run atomically with the
 transaction. An example might be a transaction removing an object from the
@@ -380,43 +417,6 @@ removals inside the transaction, and all the reference decrements and memory
 cleanup oustide of the transaction. In order to deal with such scenarios, it is
 desirable to have language support for commit blocks, as explained in the next
 section. 
-
-\begin{figure*}
-\lstset{emph={apr_thread_mutex_lock, apr_thread_mutex_unlock, apr_pool_cleanup_register}, emphstyle=\bf}
-\begin{lstlisting}
-static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
-  ...
-  if (sconf->lock) apr_thread_mutex_lock(sconf->lock);
-
-  obj = (cache_object_t *) cache_find(sconf->cache_cache, key);
-  if (obj) {
-    if (obj->complete) {
-      request_rec *rmain=r, *rtmp;
-      apr_atomic_inc32(&obj->refcount);
-      /* cache is worried about overall counts, not 'open' ones */
-      cache_update(sconf->cache_cache, obj);
-
-      /* If this is a subrequest, register the cleanup against the main
-       * request.  This will prevent the cache object from being cleaned up
-       * from under the request after the subrequest is destroyed. */
-      rtmp = r;
-      while (rtmp) {
-        rmain = rtmp;
-        rtmp = rmain->main;
-      }
-      apr_pool_cleanup_register(rmain->pool, obj, decrement_refcount, 
-        apr_pool_cleanup_null);
-    }
-    else obj = NULL;
-  }
-
-  if (sconf->lock) apr_thread_mutex_unlock(sconf->lock);
-  ...
-}
-\end{lstlisting}
-\caption{Original {\tt open\_entity} function.}
-\label{code:original-open-entity}
-\end{figure*}
 
 \begin{figure*}
 \lstset{emph={__tm_atomic, apr_pool_cleanup_register}, emphstyle=\bf}
@@ -497,30 +497,6 @@ several such issues in the hope that this will expedite their assimilation into
 future STMs.
 
 \subsection{Handler Closures}
-While commit handlers can aid a lot in the process of transactifying a legacy
-application, their current syntax in Intel STM Compiler is very limiting.
-Handlers must be given as a pointer to function of a specific signature, so a
-developer trying to move a piece of code out of an atomic block, would still
-need to write a new function. It would be nice to have a language construct that
-defines a new commit handler right where it is being registered, however this
-requires the language to support closures. 
-
-A closure is a function that has bounded variables from the environment where it
-was defined. It is intended to be passed along similarly to a function pointer,
-and when called refer to variables that existed where it was defined. In
-Figure~\ref{code:closure-open-entity}, we give an example of the desired syntax
-of such a commit handler closure. The block of code after the {\tt on_commit}
-keyword uses variables such as {\tt rmain} and {\tt obj} from its surrounding
-block, that must be captured until it is executed later when the transaction
-commits.
-
-Having closures allows us to easily defer execution of code until after the
-transaction commits, with minimal modification to our code. Instead of creating
-a new function for each piece of code being deferred, and possible create new
-data types to hold the data from inside the transaction that each such function
-required, with closures we could just change the piece of code being deferred
-into a closure, and let the implementation handle these tasks.
-
 \begin{figure*}
 \lstset{emph={__tm_atomic, apr_pool_cleanup_register, on_commit}, emphstyle=\bf}
 \begin{lstlisting}
@@ -557,6 +533,30 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
 \caption{{\tt open\_entity} function with desired commit handler closure syntax.}
 \label{code:closure-open-entity}
 \end{figure*}
+
+While commit handlers can aid a lot in the process of transactifying a legacy
+application, their current syntax in Intel STM Compiler is very limiting.
+Handlers must be given as a pointer to function of a specific signature, so a
+developer trying to move a piece of code out of an atomic block, would still
+need to write a new function. It would be nice to have a language construct that
+defines a new commit handler right where it is being registered, however this
+requires the language to support closures. 
+
+A closure is a function that has bounded variables from the environment where it
+was defined. It is intended to be passed along similarly to a function pointer,
+and when called refer to variables that existed where it was defined. In
+Figure~\ref{code:closure-open-entity}, we give an example of the desired syntax
+of such a commit handler closure. The block of code after the {\tt on_commit}
+keyword uses variables such as {\tt rmain} and {\tt obj} from its surrounding
+block, that must be captured until it is executed later when the transaction
+commits.
+
+Having closures allows us to easily defer execution of code until after the
+transaction commits, with minimal modification to our code. Instead of creating
+a new function for each piece of code being deferred, and possible create new
+data types to hold the data from inside the transaction that each such function
+required, with closures we could just change the piece of code being deferred
+into a closure, and let the implementation handle these tasks.
 
 Of course there are many problems implementing closures in a language without
 garbage collection such as C, especially since there is no guarentee that the
@@ -614,6 +614,21 @@ processors (for a total of 32 cores), and 126GB of RAM.
 
 \subsection{Results} 
 
+\begin{figure*}
+ \centering
+ \subfigure[Request throughput]{
+  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 10.6cm]{transaction-rate-client-server-0dot1.pdf}
+  \label{fig:request-throughput-0.1}
+ }
+ \hfill
+ \subfigure[Average response time]{
+  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 10.6cm]{response-time-client-server-0dot1.pdf}
+  \label{fig:response-time-0.1}
+ }
+ \caption{Very low locality workload ($s = 0.1$). The cache is not effective,
+ and the penalty of using STM is high.}
+\end{figure*}
+
 We compare the average latency and request throughput when running on different
 numbers of cores, and with different  values of $s$. Each graph presents 
 results from three
@@ -635,16 +650,16 @@ the cache.
 \begin{figure*}
  \centering
  \subfigure[Request throughput]{
-  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 11cm]{transaction-rate-client-server-0dot1.pdf}
-  \label{fig:request-throughput-0.1}
+  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 10.6cm]{transaction-rate-client-server-1.pdf}
+  \label{fig:request-throughput-1}
  }
  \hfill
  \subfigure[Average response time]{
-  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 11cm]{response-time-client-server-0dot1.pdf}
-  \label{fig:response-time-0.1}
+  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 10.6cm]{response-time-client-server-1.pdf}
+  \label{fig:response-time-1}
  }
- \caption{Very low locality workload ($s = 0.1$). The cache is not effective,
- and the penalty of using STM is high.}
+ \caption{Medium locality workload ($s = 1$). 
+ STM incurs a performance penalty, but the cache provides an improvement.}
 \end{figure*}
 
 With more representative locality, such as $s=1$, 
@@ -656,16 +671,16 @@ than when not using a cache at all.
 \begin{figure*}
  \centering
  \subfigure[Request throughput]{
-  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 11cm]{transaction-rate-client-server-1.pdf}
-  \label{fig:request-throughput-1}
+  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 10.6cm]{transaction-rate-client-server-2.pdf}
+  \label{fig:request-throughput-2}
  }
  \hfill
  \subfigure[Average response time]{
-  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 11cm]{response-time-client-server-1.pdf}
-  \label{fig:response-time-1}
+  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 10.6cm]{response-time-client-server-2.pdf}
+  \label{fig:response-time-2}
  }
- \caption{Medium locality workload ($s = 1$). 
- STM incurs a performance penalty, but the cache provides an improvement.}
+ \caption{High locality workload ($s = 2$). The cache is vital, and 
+ the STM version works best.}
 \end{figure*}
 
 With even higher locality ($s=2$), the contention on the cache is high even with
@@ -698,16 +713,17 @@ active threads rises.
 \begin{figure*}
  \centering
  \subfigure[Request throughput]{
-  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 11cm]{transaction-rate-client-server-2.pdf}
-  \label{fig:request-throughput-2}
+  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 10.6cm]{transaction-rate-single-process.pdf}
+  \label{fig:one-process-request-throughput}
  }
  \hfill
- \subfigure[Average response time]{
-  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 11cm]{response-time-client-server-2.pdf}
-  \label{fig:response-time-2}
+ \subfigure[Abort rate]{
+  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 10.6cm]{abort-rate.pdf}
+  \label{fig:one-process-abort-rate}
  }
- \caption{High locality workload ($s = 2$). The cache is vital, and 
- the STM version works best.}
+ \caption{Medium locality workload ($s = 1$), Apache in single-process mode.
+ The abort rate increases with the number of cores, which explains the decline 
+ in the transaction rate.}
 \end{figure*}
 
 In order to investigate this decrease in throughput, we wanted to show the
@@ -732,22 +748,6 @@ throughput. At first, the abort rate increases gradually,
 and the benefit of having more cores available outweighs it.
 But after about eight cores, the increase in the abort rate dominates,
 so that there is little benefit in using more cores. 
-
-\begin{figure*}
- \centering
- \subfigure[Request throughput]{
-  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 11cm]{transaction-rate-single-process.pdf}
-  \label{fig:one-process-request-throughput}
- }
- \hfill
- \subfigure[Abort rate]{
-  \includegraphics[width=8.5cm, trim=1cm 9.5cm 0 11cm]{abort-rate.pdf}
-  \label{fig:one-process-abort-rate}
- }
- \caption{Medium locality workload ($s = 1$), Apache in single-process mode.
- The abort rate increases with the number of cores, which explains the decline 
- in the transaction rate.}
-\end{figure*}
 
 \section{Conclusions}\label{sec:conclusions}
 
