@@ -700,16 +700,11 @@ among the cores over the shared resources. In particular, in the
 transactified version, the abort rate rises with the number of cores,
 as we show below. 
 
-We further note that in all workloads, there is 
-a number of cores for which the transactified version performs 
-better than the original version. We believe that this occurs 
-because the atomic blocks in the transactified version are 
-shorter than those in the lock-based version, thanks to our
-choice to defer of certain actions to occur after the commit,
-as explained in Section~\ref{sec:transactification} above.
-Thus, the period of contention among threads is shorter,
-which becomes more significant as the number of concurrently
-active threads rises.
+We further note that in all workloads, there is a number of cores for which the
+transactified version performs better than the original version. This might be
+due to the advantage STM has over course-grained locking -- the fact that
+transactions only collide when they access the same memory, while the
+non-transactified version requires the same lock for all requests.
 
 \begin{figure*}
  \centering
