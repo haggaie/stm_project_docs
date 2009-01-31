@@ -146,7 +146,7 @@ facilitate it.
 In the course of this project, we learned some valuable lessons.
 For example, we have seen that tools vary in the features they are able
 to support, which has significant impact on their usability in 
-such a large-scale projects. We have further learned that in such a large
+such large-scale projects. We have further learned that in such a large
 system, it is more realistic to transactify only pertinent parts of the code,
 while most of the code is better left untouched. Finally, we have found
 that there is a vital need to sometimes defer irrevocable actions to
@@ -160,7 +160,8 @@ Though we finally managed to overcome the hurdles and create working transactifi
 code, the process left us somewhat unsatisfied with the current state of the art. 
 In Section~\ref{sec:wishlist}, we compile a \emph{wish list} of features 
 that would have been very helpful in this process, had they been provided
-by TM toolkits; for the consideration of developers of future STM versions. 
+by TM toolkits; we hope that developers of future STM versions
+will take these into consideration. 
 
 In Section~\ref{sec:evaluation} we study the performance of the transactified 
 version of Apache on a 32-core machine. 
@@ -337,10 +338,12 @@ the removed object after it had been removed from the cache.
 
 For lock based systems, having the memory release as part of the critical
 section might cause a thread to hold the critical section a little longer than
-needed, but does not cause any problems other than that. On transactional memory
-systems, having accesses to other memory structures such as those required by
-memory management might cause collisions with other threads, thus slowing down
-the system in a similar way. In addition, the cleanup functions need to be
+needed, but does not cause any problems other than that. In TM
+systems, including the memory release in the transaction slows down
+the system in a similar way, since
+having accesses to memory structures such as those required by
+memory management may cause collisions with other threads. But 
+in addition, with this approach, the cleanup functions need to be
 transactified, which requires additional work both from the programmer and the
 compiler.
 
@@ -349,22 +352,26 @@ from the atomic section, and execute them after the transaction had committed.
 Although this requires some changes to the code, the changes are limited to the
 call-site, and need not modify any of the called libraries.
 
-For example, the following critical section in the {\tt open\_entity} function
-(Figure~\ref{code:original-open-entity}) is responsible for retrieving a page
-to fulfill a request from the server. It will increment the reference count on
-the cached page, and register a decrement function to be invoked upon completing
+For example, the  critical section in the {\tt open\_entity} function
+shown in Figure~\ref{code:original-open-entity}
+ is responsible for retrieving a page
+to fulfill a request from the server. It  increments the reference count on
+the cached page, and registers a decrement function to be invoked upon completing
 the request. When we converted the critical section into a transaction, we
 did not want the function {\tt apr\_pool\_cleanup\_register} to be called from
-inside the transaction, as transactifying it would require working an another
+inside the transaction, as transactifying it would require working on another
 library, the Apache Portable Runtime library, thus breaking encapsulation.
 
-The semantics of requests and sub-requests in apache guaranteed the request
-could not be completed before the return of this function, therefore we could
-move the registration of the cleanup function out of the atomic section, as seen
-in Figure~\ref{code:transactified-open-entity}. However, having a commit
-handler construct in the language would make such conversions easier, with it we
-could register a commit handler from within the transaction, and have the STM
-system automatically invoke it once the transaction had committed.
+The semantics of requests and sub-requests in Apache guarantee the request
+cannot be completed before the return of this function, therefore we could
+move the registration of the cleanup function out of the atomic section, as 
+seen in Figure~\ref{code:transactified-open-entity}. In this example, 
+the registration occurred at the end of the atomic block, so 
+we did not have to move it in order to take it out of the block;
+we simply ended the atomic block earlier. Nevertheless, in other cases,
+such actions occur in the middle of an atomic block. In order to
+deal with such scenarios, it is desirable to have language support for 
+commit blocks, as explained in the next section. 
 
 \begin{figure*}
 \lstset{emph={apr_thread_mutex_lock, apr_thread_mutex_unlock, apr_pool_cleanup_register}, emphstyle=\bf}
@@ -450,7 +457,9 @@ there as a mechanism that allows finalization of tasks, for instance, a
 transactional system call such as write to file might have its permanent side
 effects be executed in a commit handler. 
 Abort handlers are called when a transaction is aborted and can reverse the 
-side-effects of a transaction. These handlers can sometimes be used to implement
+side-effects of a transaction. 
+
+These handlers can sometimes be used to implement
 more efficient transactions. For example, if allocating memory inside a
 transaction, (assuming without a specialized memory allocator which is available
 in many STMs), the STM would need to log all the memory accesses to the memory
@@ -458,17 +467,19 @@ management data structures, and undo these writes in case of an abort. A more
 efficient solution could be allocating the memory immediately, and in case of an
 abort just free the memory in an abort handler.
 
-From our perspective, commit handlers could have been used to make the
+ From our perspective, commit handlers could have been used to make the
 modifications we wanted in the atomic blocks, and move finalization functions
-out of atomic blocks just by registering them as commit handlers. In the given
-example, the call to {\tt apr\_pool\_cleanup\_register} could have been
+out of atomic blocks just by registering them as commit handlers. In the 
+example shown in Figure~\ref{code:original-open-entity}, 
+the call to {\tt apr\_pool\_cleanup\_register} could have been
 converted into a call registering this function as a commit handler. 
 
 
 \section{Wish List}\label{sec:wishlist} 
-During the transactification process we have identified several apparatus whose
-absence have complicated the conversion process. In this section we indicate
-several such issues in the hope that it will expedite their assimilation into
+
+During the transactification process, we have identified several apparatus whose
+absence has complicated the conversion process. In this section, we indicate
+several such issues in the hope that this will expedite their assimilation into
 future STMs.
 
 \subsection{Handler Closures}
