@@ -319,13 +319,16 @@ described in Section \ref{sec:apache}, it is a significant point of interaction
 between Apache's worker threads, and since it is implemented with a course-grained
 lock, it is ideal for converting into STM. Another advantage is that it is a
 well encapsulated module, allowing us to study the effect of converting a small 
-part of code on the larger system.
+part of code on the larger system -- Apache itself has about 340,000 lines of
+code, while the cache module is comprised of only 6651 lines of code.
 
 The conversion process included converting critical sections protected by the
 cache module's main lock into atomic blocks, and decorating required functions
 as {\tt tm\_callable}. The module had used atomic instructions for some memory
 accesses, and these were converted to full transactions in atomic blocks, so
-that collisions with these accesses will be detected.
+that collisions with these accesses will be detected. Overall we only changed
+273 lines of code, some in the cache module, and some with additional helper
+functions such as the atomic instruction wrappers.
 
 \subsection{Defining atomic blocks}
 Following the conversion, some transactions contained code that pertained to
