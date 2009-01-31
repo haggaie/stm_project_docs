@@ -316,7 +316,7 @@ chance to try it.
 \subsection{What to transactify}
 We have decided to focus our change in Apache with the memory cache module. As
 described in Section \ref{sec:apache}, it is a significant point of interaction
-between Apache's worker threads, and since it is implemented with a course-grained
+between Apache's worker threads, and since it is implemented with a coarse-grained
 lock, it is ideal for converting into STM. Another advantage is that it is a
 well encapsulated module, allowing us to study the effect of converting a small 
 part of code on the larger system -- Apache itself has about 340,000 lines of
@@ -702,7 +702,7 @@ as we show below.
 
 We further note that in all workloads, there is a number of cores for which the
 transactified version performs better than the original version. This might be
-due to the advantage STM has over course-grained locking -- the fact that
+due to the advantage STM has over coarse-grained locking -- the fact that
 transactions only collide when they access the same memory, while the
 non-transactified version requires the same lock for all requests.
 
