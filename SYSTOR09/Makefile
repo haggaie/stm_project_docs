@@ -174,3 +174,6 @@ html	: @$(DEP) $(EPSPICS)
 #	$(OUTDATED)
 #%.eps: %.m
 #	@egrep -q $(MPRINT) $< && ($(OUTDATED))
+
+%.pdf: %.eps
+	epstopdf $<
