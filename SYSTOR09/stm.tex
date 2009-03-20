@@ -536,7 +536,7 @@ static int open_entity(cache_handle_t *h, request_rec *r, const char *key) {
 
 While commit handlers can aid a lot in the process of transactifying a legacy
 application, their current syntax in Intel STM Compiler is very limiting.
-Handlers must be given as a pointer to function of a specific signature, so a
+In particular, handlers must be given as a pointer to function of a specific signature, so a
 developer trying to move a piece of code out of an atomic block, would still
 need to write a new function. It would be nice to have a language construct that
 defines a new commit handler right where it is being registered, however this
