@@ -151,7 +151,7 @@ system, it is more realistic to transactify only pertinent parts of the code,
 while most of the code is better left untouched. Finally, we have found
 that there is a vital need to sometimes defer irrevocable actions to
 the end of a transaction; this feature is provided by a language construct called 
-a \emph{commit handlers}. In Section~\ref{sec:transactification}, 
+\emph{commit handlers}. In Section~\ref{sec:transactification}, 
 we describe in detail our transactification
 process, including the hurdles we have encountered and the means used to
 overcome them.
@@ -410,9 +410,9 @@ the registration occurred at the end of the atomic block, so
 we did not have to move it in order to take it out of the block;
 we simply ended the atomic block earlier. Nevertheless, in other cases,
 such actions occur in the middle of an atomic block. For example, in a function
-that cleans up multiple objects from the cache, for of the objects removed it
+that cleans up multiple objects from the cache, for the objects removed it
 would first remove its pointer from the cache, and then decrease its reference
-count in free its memory if necessary. In this case we would like to do all the
+count and free its memory if necessary. In this case we would like to do all the
 removals inside the transaction, and all the reference decrements and memory
 cleanup oustide of the transaction. In order to deal with such scenarios, it is
 desirable to have language support for commit handlers, as explained in the next
