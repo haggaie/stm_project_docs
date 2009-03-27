@@ -68,7 +68,7 @@ ZIP	= $(SRC:%.tex=%.zip)
 #DEP     := $(shell perl -ne '($$_)=/^[^%]*\\include\{(.*?)\}/;@_=split /,/;foreach $$t (@_) {print "$$t.tex "}' $(SRC))
 #EPSPICS := $(shell perl -ne '@foo=/^[^%]*\\(includegraphics|psfig)(\[.*?\])?\{(.*?)\}/g;if (defined($$foo[2])) { if ($$foo[2] =~ /.eps$$/) { print "$$foo[2] "; } else { print "$$foo[2].eps "; }}' $(SRC) $(DEP))
 
-CLASSFILE=sigplanconf.cls
+CLASSFILE=sig-alternate.cls
 
 define run-latex
 	$(COPY);$(LATEX) $<
