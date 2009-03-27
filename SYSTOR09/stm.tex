@@ -121,7 +121,17 @@ benchmarks. Furthermore, we convert legacy code, which used lock-based
 synchronization, to work with transactional memory, rather than write the
 benchmark from scratch. We refer to this conversion process as
 \emph{transactification}. Specifically, we transactify the Apache 
-web server. Since Apache is written in C, we needed to employ C-based
+web server.
+
+When approaching a transactifyication process of such magnitude (Apache is
+comprised of about 340,000 lines of code), one must focus the effort, in order
+to complete the transactifyication in smaller and modular changes, where the
+majority of the code base is left untouched. Therefore our first step in the
+process was a top level analysis of Apache's code base, looking for
+transactional memory opportunities. We identified Apache's cache module as an
+interesting target for transactifycation, that was compatible with our goals.
+
+Since Apache is written in C, we needed to employ C-based
 STM toolkits. We next recognized that it would not be feasible to
 use \emph{library-based} STM tools, as this  
 would entail changing all reads and writes to global variables in the code.
@@ -314,6 +324,14 @@ can annotate which functions should be transactified. However, we did not get a
 chance to try it.
 
 \subsection{What to transactify}
+Apache uses locks for synchronization in quite a few places of its code, when
+running in a multi-threaded setup. Locks are used by the worker MPM,
+to manages access to queues of incoming requests, they are used by the memory
+management system for allocating buffers and also to synchronize access to
+buffered I/O. In addition, locks are used under some of Apache's extension
+modules such as {\tt mod\_dbd}, {\tt mod\_ldap}, {\tt mod\_rewrite}, {\tt
+mod\_proxy} and the {\tt mod\_cache} caching module.
+
 We have decided to focus our change in Apache with the memory cache module. As
 described in Section \ref{sec:apache}, it is a significant point of interaction
 between Apache's worker threads, and since it is implemented with a coarse-grained
@@ -329,6 +347,11 @@ accesses, and these were converted to full transactions in atomic blocks, so
 that collisions with these accesses will be detected. Overall we only changed
 273 lines of code, some in the cache module, and some with additional helper
 functions such as the atomic instruction wrappers.
+
+It is interesting to note that the new transactions contained in most cases both
+read and write access to shared memory, both in case of a cache miss, where a
+new object is added to the cache, and in case of a cache hit, when the
+bookkeeping information of the requested object is updated.
 
 \subsection{Defining atomic blocks}
 \begin{figure*}
@@ -733,9 +756,11 @@ We ran this single-process experiment with the medium locality workload,
 that is, with $s=1$. Surprisingly, we see
 in Figure~\ref{fig:one-process-request-throughput} that the
 throughput of both the original and the STM version improve in this mode.
-This suggests that Apache's multi-process mode is somehow not supported
-well on our machines. Nevertheless, as before, neither version is able to 
-benefit from the maximum allowed parallelism of the machine. 
+We assume that this is caused by the fact that the cache is not shared between
+processes, so by running apache with multiple processes the cache capacity is
+virtually reduced. Nevertheless, as before, neither the transactified version
+nor the original version was able to benefit from the maximum allowed
+parallelism of the machine.
 
 Figure~\ref{fig:one-process-abort-rate} shows the average number of aborts
 per transaction for the experiment with the transactified version. 
