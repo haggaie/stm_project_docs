@@ -39,7 +39,7 @@
 \CopyrightYear{2009} 
 %\crdata{X-XXXXX-XXX-X/YY/MM} 
 
-\title{Transactifying Apache}
+\title{Transactifying Apache's Cache Module}
 % \subtitle{Subtitle Text, if any}
 
 %
@@ -110,7 +110,7 @@ Idit Keidar\\
 \begin{abstract}
 Apache is a large-scale industrial multi-process and multi-threaded
 application, which uses lock-based synchronization. We report on our
-experience in modifying Apache to employ transactional memory instead of
+experience in modifying Apache's cache module to employ transactional memory instead of
 locks, a process we refer to as \emph{transactification}; we are not
 aware of any previous efforts to transactify legacy software of such
 a large scale. Along the way, we learned some valuable lessons about
@@ -173,7 +173,7 @@ moreover, does not pertain to any of the typical niches of transactional memory
 benchmarks. Furthermore, we convert legacy code, which used lock-based
 synchronization, to work with transactional memory, rather than write the
 benchmark from scratch. We refer to this conversion process as
-\emph{transactification}. Specifically, we transactify the Apache 
+\emph{transactification}. Specifically, we transactify the cache module of Apache 
 web server.
 
 When approaching a transactifyication process of such magnitude (Apache is
