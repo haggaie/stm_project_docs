@@ -401,9 +401,9 @@ that collisions with these accesses will be detected. Overall we only changed
 273 lines of code, some in the cache module, and some with additional helper
 functions such as the atomic instruction wrappers.
 
-It is interesting to note that the new transactions contained in most cases both
-read and write access to shared memory, both in case of a cache miss, where a
-new object is added to the cache, and in case of a cache hit, when the
+Most of the transactions we defined contain both read and write access to
+shared memory. This is true not only in case of a cache miss, where a new
+object is added to the cache, but also in case of a cache hit, where the
 bookkeeping information of the requested object is updated.
 
 \subsection{Defining atomic blocks}
