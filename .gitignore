@@ -1,3 +1,9 @@
 *~
 *.aux
-*.bib.bak
+*.bak
+*.log
+*.out
+*.nav
+*.toc
+*.snm
+*.d
