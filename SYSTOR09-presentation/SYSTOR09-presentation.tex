@@ -7,8 +7,6 @@
 
 \newcommand{\Tanger}{{\sc Tanger}}
 
-\logo{\includegraphics[height=0.5cm]{Technion_-_Israel_Institute_of_Technology.pdf}}
-
 \mode<presentation>
 {
   \usetheme{Warsaw}
@@ -19,16 +17,32 @@
 }
 
 \usepackage[english]{babel}
+
+\pgfdeclareimage[height=0.5cm]{technion-logo}{Technion_-_Israel_Institute_of_Technology.pdf}
+\pgfdeclareimage[height=1cm]{technion-logo-large}{Technion_-_Israel_Institute_of_Technology.pdf}
+
 \title{Transactifying Apache's Cache Module}
-\date{May 4, 2009}
-\author{Haggai Eran}
-% \titlegraphic{\includegraphics[width=3cm]{logo.jpg}}
+\author[Haggai Eran, Ohad Lutzky, Zvika Guz, Idit Keidar]
+{H.~Eran \and O.~Lutzky \and Z.~Guz \and I.~Keidar}
+\institute
+{
+    Department of Electrical Engineering\\
+    Technion - Israel Institute of Technology
+\and
+    \pgfuseimage{technion-logo-large}
+}
+\date[SYSTOR'09]
+{SYSTOR 2009 - The Israeli Experimental Systems Conference}
+
+
 
 \begin{document}
 
 \begin{frame}
     \titlepage
 \end{frame}
+
+\logo{\pgfuseimage{technion-logo}}
 
 \begin{frame}{Outline}
   \tableofcontents
