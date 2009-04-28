@@ -95,7 +95,6 @@ parallelism. Transactional Memory is one approach to make this easier.
 And why Apache's Cache module?
 \begin{itemize}
 \item One of the points of interaction between Apache's worker threads.
-\note{TODO: drawing...}
 \item Well encapsulated.
 \item Currently implemented using one big lock.
 \note{Easily transactified.}
@@ -219,10 +218,6 @@ Suppose we know cleanup won't happen too soon.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Statistics and Profiling}
-[TODO - a single line somewhere - not an entire slide.]
-\end{frame}
-
 \section{Results}
 %\subsection{}
 \begin{frame}{Evaluation}
@@ -259,7 +254,7 @@ Very \alert{low} locality. Cache not effective. STM penalty high.
 \alert{High} locality. Cache is vital. STM version works best.
 \end{frame}
 
-%TODO - Abort rate slides
+%TODO - Abort rate slides. In case we include it, also add something about the profiling issues with ICC.
 \section{Summary}
 %\subsection{}
 
